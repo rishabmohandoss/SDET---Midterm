@@ -16,7 +16,7 @@ export default function SettingsScreen() {
             <Txt f="monoB" size={18} c="acc">{name[0].toUpperCase()}</Txt>
           </View>
           <View style={{ flex: 1 }}>
-            <Txt f="sansB" size={15}>{name}</Txt>
+            <Txt f="sansB" size={15} fit>{name}</Txt>
             <Txt f="mono" size={11} c="muted" style={{ marginTop: 2 }} numberOfLines={1}>{user?.email}</Txt>
           </View>
         </View>

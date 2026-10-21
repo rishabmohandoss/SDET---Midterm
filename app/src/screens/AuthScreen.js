@@ -34,7 +34,7 @@ export default function AuthScreen() {
           </View>
           <Txt f="monoB" size={10} c="up">● MARKETS LIVE · NG 3.42 ▲2.1%</Txt>
           <ErrorBox text={err} />
-          {info ? <Txt f="monoM" size={12} c="up">{info}</Txt> : null}
+          {info ? <Txt f="monoM" size={12} c="up" lines={3}>{info}</Txt> : null}
           {su && <Field label="USERNAME" value={f.username} onChangeText={up('username')} placeholder="trader01" />}
           <Field label="EMAIL" value={f.email} onChangeText={up('email')} placeholder="you@school.edu" keyboardType="email-address" />
           <Field label="PASSWORD" value={f.password} onChangeText={up('password')} placeholder="••••••••" secureTextEntry />
@@ -43,7 +43,7 @@ export default function AuthScreen() {
           {!su && <Btn title="Forgot password?" onPress={forgot} style={{ height: 40, borderWidth: 0 }} color="#7C8494" />}
           <Btn title={su ? 'I already have an account' : 'Sign up'} onPress={() => { setMode(su ? 'login' : 'signup'); setErr(''); setInfo(''); }} />
           <View style={{ flex: 1 }} />
-          <Sub style={{ textAlign: 'center' }}>Secured by Back4App · Illustrative data. Not investment advice.</Sub>
+          <Sub lines={2} style={{ textAlign: 'center', alignSelf: 'center' }}>Secured by Back4App · Illustrative data. Not investment advice.</Sub>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

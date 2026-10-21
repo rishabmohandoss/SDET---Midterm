@@ -86,7 +86,7 @@ export default function MapScreen({ goTab, openArb }) {
           })}
         </View>
       </View>
-      <Sub style={{ textAlign: 'center' }}>{LEGEND[layer]}</Sub>
+      <Sub lines={3} style={{ textAlign: 'center', alignSelf: 'center' }}>{LEGEND[layer]}</Sub>
 
       <Btn kind="pri" title="⚡ View Live Spread Opportunities" onPress={openArb} style={{ height: 52 }} />
 
@@ -95,7 +95,7 @@ export default function MapScreen({ goTab, openArb }) {
           <Row style={{ alignItems: 'flex-start', padding: 14, paddingBottom: 6 }}>
             <View style={{ flex: 1 }}>
               <Txt f="monoM" size={9} c="muted" style={{ letterSpacing: 0.8 }}>REGION EXPOSURE</Txt>
-              <Txt f="sansB" size={16} style={{ marginTop: 3 }}>{STATES[region][0]}</Txt>
+              <Txt f="sansB" size={16} fit style={{ marginTop: 3 }}>{STATES[region][0]}</Txt>
             </View>
             <Pressable onPress={() => setRegion(null)} accessibilityLabel="Close region" style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}><Txt f="monoM" size={18} c="muted">×</Txt></Pressable>
           </Row>

@@ -37,7 +37,7 @@ export default function AlertsScreen() {
       </Group>
       <Btn kind="pri" title="⚡ Send test push" disabled={!can} onPress={run(() => sendTest(active[0]))} />
       <Btn kind="out" title="Check live alerts now" disabled={!can} onPress={run(checkLive)} />
-      <Txt f="mono" size={11} c="muted" style={{ textAlign: 'center' }}>{msg || `Device: ${pushStatus}`}</Txt>
+      <Txt f="mono" size={11} c="muted" lines={3} style={{ textAlign: 'center', alignSelf: 'center' }}>{msg || `Device: ${pushStatus}`}</Txt>
       <Group title="LIVE ALERTS · NWS & OPEN-METEO">
         {saved.map((k, i) => { const c = getCity(k); return (
           <SetRow key={k} first={i === 0} title={`${shortOf(k)} · ${c ? c.cond : '…'}`} desc={c?.alert ? c.alert.headline : c ? 'No active alerts' : 'Loading'}>

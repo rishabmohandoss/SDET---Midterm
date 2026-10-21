@@ -28,7 +28,7 @@ export default function CitiesScreen({ goTab }) {
             style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 64, paddingVertical: 8, paddingLeft: 13, paddingRight: 4, borderTopWidth: 1, borderTopColor: t.line2, borderLeftWidth: 3, borderLeftColor: on ? t.acc : 'transparent', backgroundColor: on ? t.raised : 'transparent' }}>
             <View style={{ width: 10, height: 10, borderRadius: 2, backgroundColor: r ? t[r] : t.strong }} />
             <View style={{ flex: 1 }}>
-              <Txt f="sansM" size={14}>{m.name}</Txt>
+              <Txt f="sansM" size={14} fit>{m.name}</Txt>
               <Txt f="mono" size={10} c="muted" style={{ marginTop: 3 }}>{m.hub}</Txt>
             </View>
             <View style={{ alignItems: 'flex-end' }}>
@@ -50,12 +50,12 @@ export default function CitiesScreen({ goTab }) {
       </View>
       <View style={{ paddingHorizontal: 16, gap: 6 }}>
         <Label style={{ marginBottom: 2 }}>ADD A TRADING HUB</Label>
-        <Txt f="mono" size={10} c="muted" style={{ marginBottom: 4 }}>Any other city worldwide: type its name in the command bar at the top.</Txt>
+        <Txt f="mono" size={10} c="muted" lines={2} style={{ marginBottom: 4 }}>Any other city worldwide: type its name in the command bar at the top.</Txt>
         {available.length === 0 && <Txt f="mono" size={11} c="muted">All preset hubs are saved.</Txt>}
         {available.map((k) => (
           <View key={k} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: t.card, borderWidth: 1, borderColor: t.line, borderRadius: 10, paddingVertical: 8, paddingLeft: 14, paddingRight: 8 }}>
             <View style={{ flex: 1 }}>
-              <Txt f="sansM" size={13}><Txt f="monoM" size={13} c="acc">{k}</Txt>  {PRESETS[k].name}</Txt>
+              <Txt f="sansM" size={13} fit><Txt f="monoM" size={13} c="acc">{k}</Txt>  {PRESETS[k].name}</Txt>
               <Txt f="mono" size={10} c="muted" style={{ marginTop: 2 }}>{PRESETS[k].hub}</Txt>
             </View>
             <Btn kind="out" title="＋ ADD" onPress={() => { addPreset(k); load(k); }} style={{ height: 44, paddingHorizontal: 14 }} />

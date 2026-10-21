@@ -46,20 +46,20 @@ export default function ArbSheet({ visible, onClose }) {
                 <View style={{ marginHorizontal: 14, padding: 14, backgroundColor: t.raised, borderWidth: 1, borderColor: t.line, borderRadius: 12 }}>
                   <Txt f="monoM" size={10} c="muted">TOP SPREAD · {top.pair.toUpperCase()}</Txt>
                   <Txt f="monoB" size={46} c={top.v >= 0 ? 'up' : 'down'} style={{ marginVertical: 6, lineHeight: 52 }}>{money(top.v)}</Txt>
-                  <Txt size={13} c="body" style={{ lineHeight: 19 }}>{top.a} → {top.b} {top.unit}. Weather driver: {top.text}.</Txt>
+                  <Txt size={13} c="body" lines={4} style={{ lineHeight: 19 }}>{top.a} → {top.b} {top.unit}. Weather driver: {top.text}.</Txt>
                 </View>
                 <View style={{ padding: 14, paddingBottom: 0, gap: 8 }}>
                   {spreads.map((s) => (
                     <View key={s.pair} style={{ padding: 14, borderWidth: 1, borderColor: t.line, borderRadius: 12, backgroundColor: t.bg }}>
-                      <Row><Txt f="sansB" size={14} style={{ flex: 1 }}>{s.pair}</Txt><Txt f="monoB" size={15} c={s.v >= 0 ? 'up' : 'down'}>{money(s.v)}</Txt></Row>
-                      <Txt size={12} c="muted" style={{ marginTop: 3, marginBottom: 8 }}>{s.text}</Txt>
+                      <Row style={{ gap: 8 }}><Txt f="sansB" size={14} fit style={{ flex: 1 }}>{s.pair}</Txt><Txt f="monoB" size={15} c={s.v >= 0 ? 'up' : 'down'}>{money(s.v)}</Txt></Row>
+                      <Txt size={12} c="muted" lines={2} style={{ marginTop: 3, marginBottom: 8 }}>{s.text}</Txt>
                       <Row><Txt f="monoM" size={11}>{s.a} → {s.b}</Txt><Txt f="monoM" size={11} c="acc">{s.idx != null ? `WX ESI ${s.idx}` : 'WX …'}</Txt></Row>
                     </View>
                   ))}
                 </View>
               </>
             )}
-            <Txt f="mono" size={10} c="muted" style={{ padding: 18, paddingBottom: 0, lineHeight: 15 }}>Delayed futures from Yahoo Finance; spreads computed in-app. WX ESI is the live weather index of the linked hub. Not investment advice.</Txt>
+            <Txt f="mono" size={10} c="muted" lines={6} style={{ padding: 18, paddingBottom: 0, lineHeight: 15 }}>Delayed futures from Yahoo Finance; spreads computed in-app. WX ESI is the live weather index of the linked hub. Not investment advice.</Txt>
           </ScrollView>
         </Pressable>
       </Pressable>

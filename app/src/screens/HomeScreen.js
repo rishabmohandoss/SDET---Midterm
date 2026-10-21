@@ -32,7 +32,7 @@ export default function HomeScreen({ goTab }) {
         <Row style={{ alignItems: 'flex-start' }}>
           <View style={{ flex: 1 }}>
             <Txt f="monoM" size={9} c="muted" style={{ letterSpacing: 0.8 }}>{m.hub}</Txt>
-            <Txt f="sansB" size={21} style={{ marginTop: 2 }}>{m.name}</Txt>
+            <Txt f="sansB" size={21} fit style={{ marginTop: 2 }}>{m.name}</Txt>
             <Txt f="monoB" size={11} c={c.cc} style={{ marginTop: 4 }}>{c.cond}</Txt>
           </View>
           <View style={{ alignItems: 'flex-end' }}>
@@ -54,7 +54,7 @@ export default function HomeScreen({ goTab }) {
           <Txt f="monoB" size={14} c="acc">!</Txt>
           <View style={{ flex: 1 }}>
             <Txt f="monoB" size={12} c="acc">{c.cond} · {c.until}</Txt>
-            <Txt size={12} c="body" style={{ marginTop: 2 }}>{c.alert.headline}</Txt>
+            <Txt size={12} c="body" lines={3} style={{ marginTop: 2 }}>{c.alert.headline}</Txt>
           </View>
           <Pressable onPress={() => toggleRule(city)} accessibilityLabel={`Toggle alerts for ${city}`} hitSlop={10}
             style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: t.acc, borderRadius: 10 }}>
@@ -66,7 +66,7 @@ export default function HomeScreen({ goTab }) {
       <Sub style={{ textAlign: 'right' }}>LIVE · UPDATED {upd}</Sub>
       <Card>
         <Row style={{ marginBottom: 10 }}><Label>MARKET MOVERS</Label><Sub>WEATHER-LINKED · DELAYED</Sub></Row>
-        <Txt f="mono" size={11} c="muted" style={{ marginBottom: 10 }}>{c.note}</Txt>
+        <Txt f="mono" size={11} c="muted" lines={2} style={{ marginBottom: 10 }}>{c.note}</Txt>
         <View style={{ flexDirection: 'row', gap: 8 }}>
           {c.mv.map(([k, v]) => (
             <View key={k} style={{ flex: 1, backgroundColor: t.bg, borderWidth: 1, borderColor: t.line, borderRadius: 10, padding: 10 }}>
@@ -105,7 +105,7 @@ export default function HomeScreen({ goTab }) {
         <View style={{ gap: 12, marginTop: 14 }}>
           {c.sens.map(([name, v, note]) => (
             <View key={name}>
-              <Row><Txt f="sansM" size={13}>{name}</Txt><Txt f="monoB" size={12} c={risk(v)}>{v}</Txt></Row>
+              <Row style={{ gap: 8 }}><Txt f="sansM" size={13} fit style={{ flex: 1 }}>{name}</Txt><Txt f="monoB" size={12} c={risk(v)}>{v}</Txt></Row>
               <View style={{ height: 4, backgroundColor: t.line, borderRadius: 2, marginTop: 6, marginBottom: 5 }}>
                 <View style={{ height: 4, width: `${v}%`, backgroundColor: t[risk(v)], borderRadius: 2 }} />
               </View>

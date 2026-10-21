@@ -84,7 +84,7 @@ export default function Shell() {
       <View style={{ paddingHorizontal: 14, paddingTop: 4, paddingBottom: 8 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, height: 40, paddingHorizontal: 12, backgroundColor: t.card, borderWidth: 1, borderColor: t.line, borderRadius: 10 }}>
           <Txt f="monoB" size={13} c="acc">&gt;</Txt>
-          <TextInput value={q} onChangeText={setQ} placeholder="City or hub · NWK HOU NYC CHI" placeholderTextColor={t.muted} autoCapitalize="none" autoCorrect={false} accessibilityLabel="Search cities"
+          <TextInput value={q} onChangeText={setQ} placeholder="Search any city" placeholderTextColor={t.muted} autoCapitalize="none" autoCorrect={false} accessibilityLabel="Search cities"
             style={{ flex: 1, color: t.ink, fontFamily: F.mono, fontSize: 13 }} />
           <Txt f="monoB" size={10} c="up">● LIVE</Txt>
         </View>
@@ -113,7 +113,7 @@ export default function Shell() {
         {TABS.map(([k, ic, l]) => (
           <Pressable key={k} onPress={() => setTab(k)} accessibilityRole="tab" accessibilityLabel={l} style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3 }}>
             <Txt f="monoB" size={16} c={tab === k ? 'acc' : 'muted'}>{ic}</Txt>
-            <Txt f="monoB" size={9} c={tab === k ? 'acc' : 'muted'} style={{ letterSpacing: 0.7 }}>{l}</Txt>
+            <Txt f="monoB" size={9} c={tab === k ? 'acc' : 'muted'} allowFontScaling={false} style={{ letterSpacing: 0.7 }}>{l}</Txt>
           </Pressable>
         ))}
       </View>
