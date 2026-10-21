@@ -5,7 +5,7 @@ import { useApp } from '../store';
 import { Btn, Group, Seg, SetRow, Sub, Switch, Txt } from '../ui';
 
 export default function SettingsScreen() {
-  const { t, user, theme, units, speed, refresh, push, sound, quiet, set, logOut } = useApp();
+  const { t, sync, user, theme, units, speed, refresh, push, sound, quiet, set, logOut } = useApp();
   const name = user?.name || 'user';
 
   return (
@@ -20,7 +20,7 @@ export default function SettingsScreen() {
             <Txt f="mono" size={11} c="muted" style={{ marginTop: 2 }} numberOfLines={1}>{user?.email}</Txt>
           </View>
         </View>
-        <Txt f="monoM" size={10} c="up">● SYNCED</Txt>
+        <Txt f="monoM" size={10} c={sync === 'synced' ? 'up' : sync === 'error' ? 'down' : 'muted'}>● {({ synced: 'SYNCED', syncing: 'SYNCING', error: 'SYNC ERROR', idle: '…', mock: 'LOCAL ONLY' })[sync]}</Txt>
       </View>
 
       <Group title="APPEARANCE">

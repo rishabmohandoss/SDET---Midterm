@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ScrollView } from 'react-native';
 import { CITIES } from '../data';
 import { useApp } from '../store';
@@ -7,7 +7,8 @@ import { Btn, Group, Seg, SetRow, Sub, Switch, Txt } from '../ui';
 const LOGS = [['HOU', 'Heat Advisory until 8PM', '12m ago'], ['NYC', 'Hard Freeze · Z6 basis +$1.40', '2h ago'], ['RTM', 'Gale Warning until 3PM', '5h ago']];
 
 export default function AlertsScreen() {
-  const { saved, rules, toggleRule, push, set, esiMin, setToast } = useApp();
+  const { saved, rules, toggleRule, push, set, esiMin, sendTest, pushStatus } = useApp();
+  const [msg, setMsg] = useState('');
   const active = saved.filter((k) => rules[k]);
   const canTest = push && active.length > 0;
 
@@ -32,7 +33,8 @@ export default function AlertsScreen() {
           </SetRow>
         ))}
       </Group>
-      <Btn kind="pri" title="⚡ Send test push" disabled={!canTest} onPress={() => setToast(active[0])} />
+      <Btn kind="pri" title="⚡ Send test push" disabled={!canTest} onPress={async () => { setMsg('Sending…'); setMsg(await sendTest(active[0])); }} />
+      <Txt f="mono" size={11} c="muted" style={{ textAlign: 'center' }}>{msg || `Device: ${pushStatus}`}</Txt>
       <Group title="RECENT PUSHES">
         {LOGS.map(([k, msg, ago], i) => (
           <SetRow key={k} first={i === 0} title={`${k} · ${msg}`}><Sub>{ago}</Sub></SetRow>

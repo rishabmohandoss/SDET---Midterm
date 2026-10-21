@@ -1,7 +1,10 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { THEMES } from './theme';
 import * as auth from './auth';
+import * as backend from './backend';
+import { registerForPush } from './push';
+import { configured } from './parse';
 
 const KEY = 'terminalcast:v1';
 const Ctx = createContext(null);
@@ -12,34 +15,88 @@ const DEFAULTS = {
   rules: { HOU: true, NYC: true, CHI: false, RTM: true, CUS: false, HH: false, LGB: false },
   units: 'F', speed: 'mph', refresh: '1m', push: true, sound: true, quiet: false, esiMin: 80,
 };
+// Everything except the session user is synced to Back4App (UserPrefs).
+const prefsOf = ({ user, ...rest }) => rest;
 
 export function AppProvider({ children }) {
   const [s, setS] = useState(DEFAULTS);
   const [ready, setReady] = useState(false);
   const [toast, setToast] = useState(null); // city code of the in-app push banner
+  const [sync, setSync] = useState(configured ? 'idle' : 'mock'); // idle | syncing | synced | error | mock
+  const [pushStatus, setPushStatus] = useState('Not registered');
+  const token = useRef(null);
+  const loaded = useRef(false); // true once the server prefs have been merged, so we never overwrite them with defaults
 
+  // 1. Hydrate local cache, then verify the Back4App session.
   useEffect(() => {
-    AsyncStorage.getItem(KEY)
-      .then((raw) => raw && setS((p) => ({ ...p, ...JSON.parse(raw) })))
-      .catch(() => {})
-      .finally(() => setReady(true));
+    (async () => {
+      let local = {};
+      try { const raw = await AsyncStorage.getItem(KEY); if (raw) local = JSON.parse(raw); } catch {}
+      const restored = await auth.restore();
+      setS((p) => ({ ...p, ...local, ...(restored !== undefined ? { user: restored } : {}) }));
+      setReady(true);
+    })();
   }, []);
+
+  // 2. Local persistence.
   useEffect(() => { if (ready) AsyncStorage.setItem(KEY, JSON.stringify(s)).catch(() => {}); }, [s, ready]);
+
+  // 3. After login (or on app start with a session): pull prefs from Back4App, register for push.
+  useEffect(() => {
+    if (!ready || !s.user) { loaded.current = false; return; }
+    if (loaded.current) return;
+    loaded.current = true;
+    (async () => {
+      if (configured) {
+        try {
+          setSync('syncing');
+          const remote = await backend.loadPrefs();
+          if (remote) setS((p) => ({ ...p, ...remote }));
+          setSync('synced');
+        } catch (e) { console.log('[B4A] loadPrefs failed', e?.message); setSync('error'); }
+      }
+      const r = await registerForPush();
+      if (r.token) { token.current = r.token; setPushStatus('Registered'); } else setPushStatus(r.error);
+    })();
+  }, [ready, s.user?.email]);
+
+  // 4. Debounced upload of prefs + device subscriptions whenever they change.
+  useEffect(() => {
+    if (!ready || !s.user || !configured || !loaded.current) return;
+    const id = setTimeout(async () => {
+      try {
+        setSync('syncing');
+        await backend.savePrefs(prefsOf(s));
+        await backend.registerDevice({ token: token.current, cities: s.saved.filter((k) => s.rules[k]), pushEnabled: s.push, esiMin: s.esiMin });
+        setSync('synced');
+      } catch (e) { console.log('[B4A] sync failed', e?.message); setSync('error'); }
+    }, 800);
+    return () => clearTimeout(id);
+  }, [s.saved, s.rules, s.theme, s.units, s.speed, s.refresh, s.push, s.sound, s.quiet, s.esiMin, s.city, pushStatus]);
 
   const set = (patch) => setS((p) => ({ ...p, ...patch }));
   const value = useMemo(() => ({
-    ...s, ready, toast, t: THEMES[s.theme], set,
-    setToast,
+    ...s, ready, toast, sync, pushStatus, t: THEMES[s.theme], set, setToast,
     signUp: async (f) => set({ user: await auth.signUp(f) }),
     logIn: async (f) => set({ user: await auth.logIn(f) }),
-    logOut: async () => { await auth.logOut(); set({ user: null }); },
+    resetPassword: auth.resetPassword,
+    logOut: async () => { await auth.logOut(); token.current = null; set({ ...DEFAULTS, user: null }); setSync(configured ? 'idle' : 'mock'); setPushStatus('Not registered'); },
+    // Test push goes through Back4App Cloud Code when possible; otherwise shows the local banner.
+    sendTest: async (city) => {
+      if (configured && token.current) {
+        try { const r = await backend.sendTestAlert(city); return `Cloud Code sent ${r.sent}/${r.recipients}`; }
+        catch (e) { console.log('[B4A] test push failed', e?.message); setToast(city); return 'Cloud Code failed, showing local preview'; }
+      }
+      setToast(city);
+      return configured ? 'No push token, showing local preview' : 'Local preview (no Back4App keys)';
+    },
     addCity: (k) => setS((p) => ({ ...p, saved: p.saved.includes(k) ? p.saved : [...p.saved, k], rules: { ...p.rules, [k]: true } })),
     removeCity: (k) => setS((p) => { const saved = p.saved.filter((x) => x !== k); return { ...p, saved, city: p.city === k && saved.length ? saved[0] : p.city }; }),
     toggleSaved: (k) => setS((p) => ({ ...p, saved: p.saved.includes(k) ? p.saved.filter((x) => x !== k) : [...p.saved, k] })),
     toggleRule: (k) => setS((p) => ({ ...p, rules: { ...p.rules, [k]: !p.rules[k] } })),
     temp: (f) => (s.units === 'F' ? f : Math.round(((f - 32) * 5) / 9)) + '°',
     speedText: (mph) => (s.speed === 'mph' ? mph + ' mph' : Math.round(mph * 1.609) + ' kph'),
-  }), [s, ready, toast]);
+  }), [s, ready, toast, sync, pushStatus]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

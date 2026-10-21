@@ -5,17 +5,23 @@ import { useApp } from '../store';
 import { Btn, ErrorBox, Field, Sub, Txt } from '../ui';
 
 export default function AuthScreen() {
-  const { t, logIn, signUp } = useApp();
+  const { t, logIn, signUp, resetPassword } = useApp();
   const [mode, setMode] = useState('login');
   const [f, setF] = useState({ username: '', email: '', password: '', confirm: '' });
   const [err, setErr] = useState('');
+  const [info, setInfo] = useState('');
   const [busy, setBusy] = useState(false);
   const su = mode === 'signup';
   const up = (k) => (v) => setF((p) => ({ ...p, [k]: v }));
 
   const submit = async () => {
-    setErr(''); setBusy(true);
+    setErr(''); setInfo(''); setBusy(true);
     try { await (su ? signUp(f) : logIn(f)); } catch (e) { setErr(e.message); } finally { setBusy(false); }
+  };
+
+  const forgot = async () => {
+    setErr(''); setInfo('');
+    try { await resetPassword(f.email); setInfo('If that email has an account, a reset link is on its way.'); } catch (e) { setErr(e.message); }
   };
 
   return (
@@ -28,12 +34,14 @@ export default function AuthScreen() {
           </View>
           <Txt f="monoB" size={10} c="up">● MARKETS LIVE · NG 3.42 ▲2.1%</Txt>
           <ErrorBox text={err} />
+          {info ? <Txt f="monoM" size={12} c="up">{info}</Txt> : null}
           {su && <Field label="USERNAME" value={f.username} onChangeText={up('username')} placeholder="trader01" />}
           <Field label="EMAIL" value={f.email} onChangeText={up('email')} placeholder="you@school.edu" keyboardType="email-address" />
           <Field label="PASSWORD" value={f.password} onChangeText={up('password')} placeholder="••••••••" secureTextEntry />
           {su && <Field label="CONFIRM PASSWORD" value={f.confirm} onChangeText={up('confirm')} placeholder="••••••••" secureTextEntry />}
           <Btn kind="pri" title={busy ? 'Please wait…' : su ? 'Create account' : 'Log in'} onPress={submit} disabled={busy} />
-          <Btn title={su ? 'I already have an account' : 'Sign up'} onPress={() => { setMode(su ? 'login' : 'signup'); setErr(''); }} />
+          {!su && <Btn title="Forgot password?" onPress={forgot} style={{ height: 40, borderWidth: 0 }} color="#7C8494" />}
+          <Btn title={su ? 'I already have an account' : 'Sign up'} onPress={() => { setMode(su ? 'login' : 'signup'); setErr(''); setInfo(''); }} />
           <View style={{ flex: 1 }} />
           <Sub style={{ textAlign: 'center' }}>Secured by Back4App · Illustrative data. Not investment advice.</Sub>
         </ScrollView>
