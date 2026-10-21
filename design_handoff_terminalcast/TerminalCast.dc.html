@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;background:#07080B;color:#E6E8EC;font-family:'IBM Plex Sans',Helvetica,sans-serif}
+a{color:#FFB000}a:hover{color:#FFD066}
+@keyframes tape{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+::-webkit-scrollbar{display:none}
+</style>
+</helmet>
+<div style="display:flex;flex-wrap:wrap;gap:56px;justify-content:center;align-items:flex-start;padding:40px 24px;min-height:100vh">
+
+<!-- ============ IPHONE ============ -->
+<div style="position:relative;width:414px;height:868px;flex:none;border-radius:64px;background:#1a1c22;padding:12px;box-shadow:0 0 0 2px #2c2f38,0 40px 90px rgba(0,0,0,.7)">
+ <div style="position:relative;width:390px;height:844px;border-radius:52px;background:#0D0E12;overflow:hidden;display:flex;flex-direction:column">
+
+  <!-- status bar -->
+  <div style="height:54px;flex:none;display:flex;justify-content:space-between;align-items:flex-end;padding:0 32px 8px;font:600 15px 'IBM Plex Sans',sans-serif;position:relative">
+    <span>9:41</span>
+    <div style="position:absolute;left:50%;top:11px;transform:translateX(-50%);width:120px;height:34px;border-radius:20px;background:#000"></div>
+    <span style="font:500 11px 'IBM Plex Mono',monospace;display:flex;gap:6px;align-items:center">5G <span style="width:24px;height:11px;border:1px solid #7C8494;border-radius:3px;padding:1px"><span style="display:block;width:75%;height:100%;background:#E6E8EC;border-radius:1px"></span></span></span>
+  </div>
+
+  <!-- command bar -->
+  <div style="display:flex;gap:8px;padding:2px 14px 8px;flex:none">
+    <div style="flex:1;display:flex;align-items:center;gap:8px;height:40px;padding:0 12px;background:#14161C;border:1px solid #262A33;border-radius:10px">
+      <span style="font:600 13px 'IBM Plex Mono',monospace;color:#FFB000">&gt;</span>
+      <input value="{{ query }}" onInput="{{ onQuery }}" placeholder="City or hub · HOU NYC RTM CHI" style="flex:1;min-width:0;background:transparent;border:0;outline:0;color:#E6E8EC;font:400 13px 'IBM Plex Mono',monospace">
+      <span style="display:flex;align-items:center;gap:5px;font:600 10px 'IBM Plex Mono',monospace;color:#00FF66"><span style="width:6px;height:6px;border-radius:50%;background:#00FF66;animation:pulse 1.6s infinite"></span>LIVE</span>
+    </div>
+  </div>
+
+  <!-- ticker -->
+  <div style="height:30px;flex:none;overflow:hidden;background:#14161C;border-top:1px solid #262A33;border-bottom:1px solid #262A33;display:flex;align-items:center">
+    <div style="display:flex;width:max-content;animation:tape 28s linear infinite">
+      <sc-for list="{{ tape }}" as="t" hint-placeholder-count="8">
+        <div style="display:flex;align-items:baseline;gap:6px;padding:0 16px;border-right:1px solid #262A33;font:500 12px 'IBM Plex Mono',monospace;white-space:nowrap">
+          <span style="color:#FFB000;font-weight:600">{{ t.sym }}</span><span>{{ t.price }}</span><span style="color:{{ t.col }}">{{ t.chg }}</span>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <!-- search results -->
+  <sc-if value="{{ hasResults }}" hint-placeholder-val="{{ false }}">
+    <div style="flex:none;background:#14161C;border-bottom:1px solid #333845">
+      <sc-for list="{{ results }}" as="r" hint-placeholder-count="2">
+        <div onClick="{{ r.pick }}" style="display:flex;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #1d2028;font:500 13px 'IBM Plex Mono',monospace;cursor:pointer"><span><span style="color:#FFB000">{{ r.code }}</span> &nbsp;{{ r.name }}</span><span style="color:#7C8494">{{ r.hub }}</span></div>
+      </sc-for>
+    </div>
+  </sc-if>
+
+  <!-- ===== SCROLL BODY ===== -->
+  <div style="flex:1;min-height:0;overflow:auto;position:relative">
+
+   <!-- MAP TAB -->
+   <sc-if value="{{ isMap }}" hint-placeholder-val="{{ true }}">
+    <div style="padding:12px 14px 20px;display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline">
+        <span style="font:600 10px 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8494">US WEATHER × MACRO</span>
+        <span style="font:600 12px 'IBM Plex Mono',monospace;color:#FFB000">{{ layerTitle }}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px">
+        <sc-for list="{{ layers }}" as="l" hint-placeholder-count="4">
+          <button onClick="{{ l.pick }}" style="cursor:pointer;height:36px;font:500 11px 'IBM Plex Mono',monospace;border:1px solid {{ l.bd }};background:{{ l.bg }};color:{{ l.fg }};border-radius:8px">[{{ l.label }}]</button>
+        </sc-for>
+      </div>
+
+      <div style="position:relative;width:362px;height:262px;margin:0 auto;background:#0f1116;border:1px solid #262A33;border-radius:12px;overflow:hidden">
+        <div style="position:absolute;left:4px;top:4px;width:352px;height:256px">
+          <sc-for list="{{ tiles }}" as="s" hint-placeholder-count="50">
+            <div onClick="{{ s.pick }}" style="position:absolute;left:{{ s.x }}px;top:{{ s.y }}px;width:30px;height:30px;background:{{ s.bg }};border:1px solid {{ s.bd }};color:{{ s.fg }};border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;font:500 9px 'IBM Plex Mono',monospace">{{ s.id }}</div>
+          </sc-for>
+          <svg width="352" height="256" style="position:absolute;left:0;top:0;pointer-events:none">
+            <sc-for list="{{ lines }}" as="ln" hint-placeholder-count="0">
+              <line x1="{{ ln.x1 }}" y1="{{ ln.y1 }}" x2="{{ ln.x2 }}" y2="{{ ln.y2 }}" stroke="{{ ln.col }}" stroke-width="2" stroke-dasharray="{{ ln.dash }}"></line>
+            </sc-for>
+          </svg>
+          <sc-for list="{{ pins }}" as="p" hint-placeholder-count="5">
+            <div onClick="{{ p.pick }}" style="position:absolute;left:{{ p.x }}px;top:{{ p.y }}px;transform:translate(-50%,-50%);cursor:pointer;z-index:2;display:flex;flex-direction:column;align-items:center;gap:1px">
+              <span style="width:14px;height:14px;border-radius:50%;background:{{ p.col }};border:2px solid #0D0E12;box-shadow:0 0 0 1px {{ p.col }},0 0 10px {{ p.col }}"></span>
+              <span style="font:600 8px 'IBM Plex Mono',monospace;background:rgba(13,14,18,.9);padding:0 3px;border-radius:2px;white-space:nowrap">{{ p.label }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="font:400 10px 'IBM Plex Mono',monospace;color:#7C8494;text-align:center">{{ legendText }}</div>
+
+      <button onClick="{{ openArb }}" style="cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;height:52px;background:#FFB000;color:#0D0E12;border:0;border-radius:12px;font:600 15px 'IBM Plex Sans',sans-serif;box-shadow:0 0 28px rgba(255,176,0,.25)" style-active="background:#FFC638">⚡ View Live Arbitrage Opportunities<span style="font:600 11px 'IBM Plex Mono',monospace;background:#0D0E12;color:#FFB000;padding:2px 7px;border-radius:6px">4</span></button>
+
+      <!-- region sheet -->
+      <sc-if value="{{ hasRegion }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#14161C;border:1px solid #333845;border-top:2px solid {{ region.col }};border-radius:12px;overflow:hidden">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:12px 14px 6px">
+            <div><div style="font:500 9px 'IBM Plex Mono',monospace;color:#7C8494;letter-spacing:.08em">REGION EXPOSURE</div><div style="font:600 16px 'IBM Plex Sans',sans-serif;margin-top:3px">{{ region.title }}</div></div>
+            <button onClick="{{ closeRegion }}" style="cursor:pointer;background:transparent;border:1px solid #333845;border-radius:8px;color:#7C8494;width:36px;height:36px;font:500 14px 'IBM Plex Mono',monospace">×</button>
+          </div>
+          <div style="padding:0 14px 10px;font:400 13px/1.5 'IBM Plex Sans',sans-serif;color:#C4C8D0;text-wrap:pretty">{{ region.text }}</div>
+          <div style="display:grid;grid-template-columns:1fr auto;gap:6px 10px;padding:10px 14px;border-top:1px solid #262A33;font:500 11px 'IBM Plex Mono',monospace">
+            <sc-for list="{{ region.rows }}" as="r" hint-placeholder-count="3"><span style="color:#7C8494">{{ r.k }}</span><span style="color:{{ r.col }};text-align:right">{{ r.v }}</span></sc-for>
+          </div>
+          <div style="display:flex;gap:8px;padding:10px 14px 14px;border-top:1px solid #262A33">
+            <button onClick="{{ region.open }}" style="cursor:pointer;flex:1;height:44px;background:transparent;border:1px solid #333845;border-radius:10px;color:#E6E8EC;font:500 12px 'IBM Plex Mono',monospace">OPEN CITY</button>
+            <button onClick="{{ region.watch }}" style="cursor:pointer;flex:1;height:44px;background:transparent;border:1px solid #FFB000;border-radius:10px;color:#FFB000;font:500 12px 'IBM Plex Mono',monospace">{{ region.watchLabel }}</button>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+   </sc-if>
+
+   <!-- CITY TAB -->
+   <sc-if value="{{ isCity }}" hint-placeholder-val="{{ false }}">
+    <div style="padding:14px;display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;gap:6px;overflow:auto">
+        <sc-for list="{{ cityTabs }}" as="c" hint-placeholder-count="4">
+          <button onClick="{{ c.pick }}" style="flex:none;cursor:pointer;height:36px;padding:0 14px;font:500 12px 'IBM Plex Mono',monospace;border:1px solid {{ c.bd }};background:{{ c.bg }};color:{{ c.fg }};border-radius:8px">{{ c.code }}</button>
+        </sc-for>
+      </div>
+      <div style="background:#14161C;border:1px solid #262A33;border-radius:14px;padding:14px">
+        <div style="display:flex;justify-content:space-between">
+          <div><div style="font:500 9px 'IBM Plex Mono',monospace;color:#7C8494;letter-spacing:.08em">{{ city.hub }}</div>
+            <div style="font:600 21px 'IBM Plex Sans',sans-serif;margin-top:2px">{{ city.name }}</div>
+            <div style="font:600 11px 'IBM Plex Mono',monospace;color:{{ city.condCol }};margin-top:4px">{{ city.cond }}</div></div>
+          <div style="text-align:right"><div style="font:500 44px/1 'IBM Plex Mono',monospace">{{ city.temp }}°</div><div style="font:400 10px 'IBM Plex Mono',monospace;color:#7C8494;margin-top:4px">FEELS {{ city.feels }}°</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:#262A33;border-radius:8px;overflow:hidden;margin-top:14px">
+          <div style="background:#0D0E12;padding:9px 10px"><div style="font:500 9px 'IBM Plex Mono',monospace;color:#7C8494">WIND</div><div style="font:500 12px 'IBM Plex Mono',monospace;margin-top:3px">{{ city.wind }}</div></div>
+          <div style="background:#0D0E12;padding:9px 10px"><div style="font:500 9px 'IBM Plex Mono',monospace;color:#7C8494">BARO</div><div style="font:500 12px 'IBM Plex Mono',monospace;margin-top:3px">{{ city.press }}</div></div>
+          <div style="background:#0D0E12;padding:9px 10px"><div style="font:500 9px 'IBM Plex Mono',monospace;color:#7C8494">PRECIP</div><div style="font:500 12px 'IBM Plex Mono',monospace;margin-top:3px">{{ city.precip }}</div></div>
+        </div>
+        
+      </div>
+
+      <div style="display:flex;gap:10px;align-items:center;padding:10px 12px;background:rgba(255,176,0,.1);border:1px solid #FFB000;border-radius:12px">
+        <span style="font:600 14px 'IBM Plex Mono',monospace;color:#FFB000">!</span>
+        <div style="flex:1;min-width:0"><div style="font:600 12px 'IBM Plex Mono',monospace;color:#FFB000">{{ city.cond }} · {{ city.until }}</div><div style="font:400 12px 'IBM Plex Sans',sans-serif;color:#C4C8D0;margin-top:2px">{{ city.alertNote }}</div></div>
+      </div>
+      <div style="background:#14161C;border:1px solid #262A33;border-radius:14px;padding:14px"><div style="display:flex;justify-content:space-between;margin-bottom:10px"><span style="font:600 11px 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#FFB000">MARKET MOVERS</span><span style="font:500 10px 'IBM Plex Mono',monospace;color:#7C8494">WEATHER-LINKED</span></div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+          <sc-for list="{{ city.movers }}" as="m" hint-placeholder-count="3"><div style="background:#0D0E12;border:1px solid #262A33;border-radius:10px;padding:10px"><div style="font:500 9px 'IBM Plex Mono',monospace;color:#7C8494">{{ m.k }}</div><div style="font:600 15px 'IBM Plex Mono',monospace;color:{{ m.col }};margin-top:4px">{{ m.v }}</div></div></sc-for>
+        </div>
+      </div>
+      <div style="background:#14161C;border:1px solid #262A33;border-radius:14px;padding:14px"><div style="display:flex;justify-content:space-between;margin-bottom:10px"><span style="font:600 11px 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#FFB000">HOURLY</span><span style="font:500 10px 'IBM Plex Mono',monospace;color:#7C8494">NEXT 12H</span></div>
+        <div style="display:flex;gap:2px;overflow:auto">
+          <sc-for list="{{ city.hourly }}" as="h" hint-placeholder-count="8"><div style="flex:none;width:48px;text-align:center;font:500 12px 'IBM Plex Mono',monospace"><div style="color:#7C8494;font-size:10px">{{ h.t }}</div><div style="margin:8px 0 4px">{{ h.temp }}°</div><div style="color:#22D3EE;font-size:10px">{{ h.p }}</div></div></sc-for>
+        </div>
+      </div>
+      
+      <div style="background:#14161C;border:1px solid #262A33;border-radius:14px;padding:14px">
+        <div style="display:flex;justify-content:space-between"><span style="font:600 11px 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#FFB000">ECONOMIC SENSITIVITY INDEX</span><span style="font:500 10px 'IBM Plex Mono',monospace;color:#7C8494">24H</span></div>
+        <div style="position:relative;width:220px;margin:8px auto 0">
+          <svg width="220" height="128" viewBox="0 0 160 92"><path d="M 10 80 A 70 70 0 0 1 150 80" fill="none" stroke="#262A33" stroke-width="10"></path><path d="M 10 80 A 70 70 0 0 1 150 80" fill="none" stroke="{{ city.idxCol }}" stroke-width="10" stroke-dasharray="{{ city.arc }}"></path></svg>
+          <div style="position:absolute;left:0;right:0;bottom:6px;text-align:center"><div style="font:600 34px/1 'IBM Plex Mono',monospace;color:{{ city.idxCol }}">{{ city.idx }}</div><div style="font:500 10px 'IBM Plex Mono',monospace;color:#7C8494;margin-top:4px">{{ city.idxLabel }}</div></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px;margin-top:14px">
+          <sc-for list="{{ city.sens }}" as="s" hint-placeholder-count="4">
+            <div><div style="display:flex;justify-content:space-between;font:500 13px 'IBM Plex Sans',sans-serif"><span>{{ s.label }}</span><span style="font:600 12px 'IBM Plex Mono',monospace;color:{{ s.col }}">{{ s.v }}</span></div>
+              <div style="height:4px;background:#262A33;border-radius:2px;margin:6px 0 5px"><div style="height:4px;width:{{ s.w }};background:{{ s.col }};border-radius:2px"></div></div>
+              <div style="font:400 11px 'IBM Plex Mono',monospace;color:#7C8494">{{ s.note }}</div></div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="background:#14161C;border:1px solid #262A33;border-radius:14px;padding:14px"><div style="display:flex;justify-content:space-between;margin-bottom:10px"><span style="font:600 11px 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#FFB000">10-DAY FORECAST</span><span style="font:500 10px 'IBM Plex Mono',monospace;color:#7C8494">HI / LO °F</span></div>
+        <sc-for list="{{ city.ten }}" as="d" hint-placeholder-count="10"><div style="display:grid;grid-template-columns:44px 1fr 28px 1fr 28px;gap:8px;align-items:center;height:34px;border-top:1px solid #1d2028;font:500 12px 'IBM Plex Mono',monospace"><span style="color:#7C8494;font-size:11px">{{ d.d }}</span><span style="color:{{ d.col }};font-size:10px">{{ d.c }}</span><span style="color:#7C8494;text-align:right">{{ d.lo }}</span><div style="position:relative;height:4px;background:#262A33;border-radius:2px"><div style="position:absolute;height:4px;border-radius:2px;background:{{ d.col }};left:{{ d.l }};width:{{ d.w }}"></div></div><span style="text-align:right">{{ d.hi }}</span></div></sc-for>
+      </div>
+      <div style="background:#14161C;border:1px solid #262A33;border-radius:14px;padding:14px"><div style="display:flex;justify-content:space-between;margin-bottom:10px"><span style="font:600 11px 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#FFB000">PRECIPITATION</span><span style="font:500 10px 'IBM Plex Mono',monospace;color:#7C8494">NEXT 12H</span></div>
+        <div style="display:flex;align-items:flex-end;gap:4px;height:64px">
+          <sc-for list="{{ city.bars }}" as="b" hint-placeholder-count="12"><div style="flex:1;background:#22D3EE;border-radius:2px 2px 0 0;opacity:.85;height:{{ b }}"></div></sc-for>
+        </div>
+        <div style="display:flex;justify-content:space-between;font:400 10px 'IBM Plex Mono',monospace;color:#7C8494;margin-top:6px"><span>NOW</span><span>+6H</span><span>+12H</span></div>
+      </div>
+      <div style="background:#14161C;border:1px solid #262A33;border-radius:14px;padding:14px"><div style="display:flex;justify-content:space-between;margin-bottom:10px"><span style="font:600 11px 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#FFB000">CONDITIONS</span><span style="font:500 10px 'IBM Plex Mono',monospace;color:#7C8494"></span></div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:#262A33;border-radius:8px;overflow:hidden">
+          <sc-for list="{{ city.conds }}" as="c" hint-placeholder-count="6"><div style="background:#0D0E12;padding:10px"><div style="font:500 9px 'IBM Plex Mono',monospace;color:#7C8494">{{ c.k }}</div><div style="font:500 14px 'IBM Plex Mono',monospace;margin-top:4px;color:{{ c.col }}">{{ c.v }}</div></div></sc-for>
+        </div>
+      </div>
+    </div>
+   </sc-if>
+
+   <!-- WATCH TAB -->
+   <sc-if value="{{ isWatch }}" hint-placeholder-val="{{ false }}">
+    <div style="padding:14px 0">
+      <div style="display:flex;justify-content:space-between;padding:0 16px 8px"><span style="font:600 11px 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#FFB000">WATCHLIST · SAVED HUBS</span><span style="font:500 10px 'IBM Plex Mono',monospace;color:#7C8494">{{ watchCount }}</span></div>
+      <sc-for list="{{ watch }}" as="w" hint-placeholder-count="6">
+        <div onClick="{{ w.pick }}" style="cursor:pointer;display:grid;grid-template-columns:10px 1fr auto;gap:12px;align-items:center;min-height:60px;padding:8px 16px;border-top:1px solid #1d2028;border-left:3px solid {{ w.edge }};background:{{ w.bg }}">
+          <span style="width:10px;height:10px;border-radius:2px;background:{{ w.dot }}"></span>
+          <div style="min-width:0"><div style="font:500 14px 'IBM Plex Sans',sans-serif">{{ w.name }}</div><div style="font:400 10px 'IBM Plex Mono',monospace;color:#7C8494;margin-top:3px">{{ w.sub }}</div></div>
+          <div style="text-align:right;font:500 12px 'IBM Plex Mono',monospace"><div>{{ w.temp }}</div><div style="color:{{ w.col }};margin-top:2px">ESI {{ w.idx }}</div></div>
+        </div>
+      </sc-for>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;padding:14px 16px;font:400 10px 'IBM Plex Mono',monospace;color:#7C8494">
+        <span style="display:flex;gap:5px;align-items:center"><span style="width:8px;height:8px;background:#FF3B4E"></span>SHOCK</span><span style="display:flex;gap:5px;align-items:center"><span style="width:8px;height:8px;background:#FFB000"></span>ELEVATED</span><span style="display:flex;gap:5px;align-items:center"><span style="width:8px;height:8px;background:#22D3EE"></span>COLD</span><span style="display:flex;gap:5px;align-items:center"><span style="width:8px;height:8px;background:#00FF66"></span>CLEAR</span>
+      </div>
+    </div>
+   </sc-if>
+  </div>
+
+  <!-- tab bar -->
+  <div style="flex:none;display:grid;grid-template-columns:repeat(4,1fr);height:84px;padding:6px 8px 26px;background:rgba(13,14,18,.96);border-top:1px solid #262A33">
+    <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4">
+      <button onClick="{{ t.pick }}" style="cursor:pointer;background:transparent;border:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:{{ t.col }}">
+        <span style="font:600 16px 'IBM Plex Mono',monospace">{{ t.icon }}</span><span style="font:600 9px 'IBM Plex Mono',monospace;letter-spacing:.08em">{{ t.label }}</span>
+      </button>
+    </sc-for>
+  </div>
+  <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:#E6E8EC;z-index:20"></div>
+
+  <!-- ARB SHEET -->
+  <sc-if value="{{ arbOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeArb }}" style="position:absolute;inset:0;background:rgba(5,6,8,.72);z-index:10;display:flex;align-items:flex-end">
+      <div onClick="{{ stop }}" style="width:100%;max-height:86%;overflow:auto;background:#14161C;border-top:2px solid #FFB000;border-radius:24px 24px 0 0;padding-bottom:34px">
+        <div style="width:40px;height:4px;border-radius:2px;background:#333845;margin:8px auto 0"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 18px 10px">
+          <div><div style="font:600 11px 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#FFB000">⚡ ARBITRAGE RADAR</div><div style="font:600 18px 'IBM Plex Sans',sans-serif;margin-top:3px">Weather-driven spreads</div></div>
+          <button onClick="{{ closeArb }}" style="cursor:pointer;background:transparent;border:1px solid #333845;border-radius:10px;color:#7C8494;width:44px;height:44px;font:500 16px 'IBM Plex Mono',monospace">×</button>
+        </div>
+        <div style="margin:0 14px;padding:14px;background:#171A21;border:1px solid #262A33;border-radius:12px">
+          <div style="font:500 10px 'IBM Plex Mono',monospace;color:#7C8494">TOP SPREAD · HENRY HUB vs TRANSCO Z6</div>
+          <div style="font:600 46px/1 'IBM Plex Mono',monospace;color:#00FF66;margin:6px 0 8px">${{ topSpread }}</div>
+          <div style="font:400 13px/1.5 'IBM Plex Sans',sans-serif;color:#C4C8D0;text-wrap:pretty">Freezing temperatures in NY against mild conditions in TX created a $1.40 Henry Hub vs Transco Z6 natural gas price spread. Pipeline at 98% utilization caps arbitrage flow.</div>
+        </div>
+        <div style="padding:10px 14px 0;display:flex;flex-direction:column;gap:8px">
+          <sc-for list="{{ arbs }}" as="a" hint-placeholder-count="4">
+            <div style="padding:12px 14px;border:1px solid #262A33;border-radius:12px;background:#0D0E12">
+              <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:600 14px 'IBM Plex Sans',sans-serif">{{ a.pair }}</span><span style="font:600 15px 'IBM Plex Mono',monospace;color:{{ a.col }}">{{ a.spread }}</span></div>
+              <div style="font:400 12px 'IBM Plex Sans',sans-serif;color:#7C8494;margin:3px 0 8px">{{ a.driver }}</div>
+              <div style="display:flex;justify-content:space-between;font:500 11px 'IBM Plex Mono',monospace"><span>{{ a.a }} → {{ a.b }}</span><span style="color:#FFB000">CONF {{ a.conf }}</span></div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="padding:12px 18px 0;font:400 10px 'IBM Plex Mono',monospace;color:#7C8494">Illustrative data. Not investment advice.</div>
+      </div>
+    </div>
+  </sc-if>
+ </div>
+</div>
+
+<!-- ============ DESIGN SYSTEM ============ -->
+<div style="width:460px;max-width:100%;display:flex;flex-direction:column;gap:22px">
+  <div><div style="font:600 11px 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#FFB000">TERMINALCAST · DESIGN SYSTEM</div>
+    <div style="font:600 26px/1.15 'IBM Plex Sans',sans-serif;margin-top:6px">Institutional density, thumb-sized targets.</div></div>
+
+  <div><div style="font:600 10px 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8494;margin-bottom:8px">COLOR · SEMANTICS</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+      <sc-for list="{{ swatches }}" as="c" hint-placeholder-count="8">
+        <div style="border:1px solid #262A33;border-radius:8px;overflow:hidden"><div style="height:40px;background:{{ c.hex }}"></div><div style="padding:6px 8px;background:#14161C"><div style="font:600 10px 'IBM Plex Mono',monospace">{{ c.hex }}</div><div style="font:400 10px 'IBM Plex Sans',sans-serif;color:#7C8494;margin-top:2px">{{ c.use }}</div></div></div>
+      </sc-for>
+    </div></div>
+
+  <div><div style="font:600 10px 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8494;margin-bottom:8px">TYPE</div>
+    <div style="border:1px solid #262A33;border-radius:8px;background:#14161C;padding:14px;display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:600 20px 'IBM Plex Sans',sans-serif">IBM Plex Sans 600</span><span style="font:400 10px 'IBM Plex Mono',monospace;color:#7C8494">TITLES · COPY 13–21</span></div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:500 20px 'IBM Plex Mono',monospace">3,142.50 +2.1%</span><span style="font:400 10px 'IBM Plex Mono',monospace;color:#7C8494">DATA · 11–44</span></div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:600 11px 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#FFB000">SECTION LABEL</span><span style="font:400 10px 'IBM Plex Mono',monospace;color:#7C8494">CAPS · +10% TRACKING</span></div>
+    </div></div>
+
+  <div><div style="font:600 10px 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8494;margin-bottom:8px">RULES</div>
+    <div style="display:flex;flex-direction:column;gap:6px;font:400 13px/1.45 'IBM Plex Sans',sans-serif;color:#C4C8D0">
+      <div>Amber = action, tickers, alerts. One amber CTA per screen.</div>
+      <div>Green = gains and bullish impact. Red = supply shock and losses. Cyan = freeze and cold.</div>
+      <div>Surfaces step #0D0E12 → #14161C → #171A21 with 1px #262A33 lines. No shadows except the amber CTA glow.</div>
+      <div>Targets ≥ 44pt. Every region reachable in two taps: map pin → panel → city.</div>
+      <div>Navigation: bottom tab bar (Map, City, Watch, Radar). Arbitrage is a bottom sheet.</div>
+    </div></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { city: 'HOU', layer: 'futures', region: null, arb: false, query: '', tab: 'city', watch: ['HOU', 'NYC', 'CHI', 'RTM', 'CUS', 'HH', 'LGB'], tick: 0 };
+  G = { green: '#00FF66', red: '#FF3B4E', amber: '#FFB000', cyan: '#22D3EE' };
+  grid = { ME:[10,0],VT:[9,1],NH:[10,1],WA:[0,1],ID:[1,1],MT:[2,1],ND:[3,1],MN:[4,1],WI:[5,1],MI:[6,1],NY:[8,1],MA:[10,2],
+    OR:[0,2],NV:[1,2],WY:[2,2],SD:[3,2],IA:[4,2],IL:[5,2],IN:[6,2],OH:[7,2],PA:[8,2],NJ:[9,2],
+    CA:[0,3],UT:[1,3],CO:[2,3],NE:[3,3],MO:[4,3],KY:[5,3],WV:[6,3],VA:[7,3],MD:[8,3],DE:[9,3],
+    AZ:[1,4],NM:[2,4],KS:[3,4],AR:[4,4],TN:[5,4],NC:[6,4],SC:[7,4],
+    OK:[3,5],LA:[4,5],MS:[5,5],AL:[6,5],GA:[7,5],TX:[3,6],FL:[8,6] };
+  chg = { TX:4.2,NY:6.1,NJ:5.4,PA:3.1,OK:1.2,LA:2.0,IL:0.8,OH:1.4,MA:5.8,MI:2.2,MN:1.6,WI:1.3,GA:1.1,FL:0.3,ND:-1.1,SD:-0.7,CA:-0.6,AZ:-1.2,NV:-0.4 };
+  freeze = { ND:3,MT:3,MN:2,SD:2,WI:2,MI:1,NY:2,VT:2,NH:2,ME:2,WY:1,NE:1,KS:1,OK:1,IL:2 };
+  names = { TX:'Texas Gulf Coast',NY:'New York · Transco Z6',OK:'Oklahoma · Cushing',LA:'Louisiana · Henry Hub',IL:'Illinois · Chicago',CA:'California · LA/Long Beach',KS:'Kansas · Winter Wheat',ND:'North Dakota · Bakken',GA:'Georgia · Savannah' };
+  info = {
+    TX:{ c:'HOU', text:'90°F+ heat wave spiking regional grid load; ERCOT power futures +4.2%. Gulf refinery runs trimmed on cooling-water limits.', col:'#FF3B4E', rows:[['ERCOT NORTH DA','$96.40 +4.2%','#00FF66'],['HSC NAT GAS','$3.18 +1.9%','#00FF66'],['REFINERY RISK','HIGH','#FF3B4E']] },
+    NY:{ c:'NYC', text:'Freezing temperatures drive heating demand; Transco Z6 basis blown out against mild Gulf supply. Heating oil bid.', col:'#22D3EE', rows:[['TRANSCO Z6','$4.82 +6.1%','#00FF66'],['HEATING OIL','$2.91 +2.4%','#00FF66'],['PIPELINE UTIL.','98%','#FF3B4E']] },
+    OK:{ c:'CUS', text:'Cushing storage tight and cold snap in the Plains slows trucked barrels. WTI spreads to Gulf widening.', col:'#FFB000', rows:[['WTI CUSHING','$78.64 −0.4%','#FF3B4E'],['TANK UTIL.','61%','#FFB000'],['CL M1–M2','+$0.32','#00FF66']] },
+    LA:{ c:'HH', text:'Henry Hub supply long on mild Gulf temps and steady LNG feedgas. Price pinned while the Northeast tightens.', col:'#00FF66', rows:[['HENRY HUB','$3.42 +2.1%','#00FF66'],['LNG FEEDGAS','14.8 Bcf/d','#E6E8EC'],['STORM RISK','LOW','#00FF66']] },
+    IL:{ c:'CHI', text:'Sub-freezing snap and ice risk delay rail and barge grain movements on the upper Mississippi.', col:'#FFB000', rows:[['ZW CHICAGO','$6.12 +1.3%','#00FF66'],['RAIL DWELL','+19h','#FF3B4E'],['BARGE FREIGHT','$14.20/t','#FFB000']] },
+    CA:{ c:'LGB', text:'Clear and mild. Port throughput normal; inbound container rates easing.', col:'#00FF66', rows:[['FBX WEST COAST','$2,184 +3.8%','#00FF66'],['AT ANCHOR','3 vessels','#00FF66'],['PORT DELAY','0.4 d','#00FF66']] },
+    KS:{ c:'CUS', text:'Hard freeze with thin snow cover raises winterkill risk across the wheat belt. Supportive for ZW.', col:'#22D3EE', rows:[['ZW KC HRW','$6.48 +1.8%','#00FF66'],['WINTERKILL','ELEVATED','#FFB000'],['SNOW COVER','12%','#FF3B4E']] },
+    ND:{ c:'CUS', text:'Extreme cold creates wellhead freeze-offs in the Bakken; output could drop on frozen gathering lines.', col:'#22D3EE', rows:[['BAKKEN OUTPUT','−90 kb/d est.','#FF3B4E'],['WTI','$78.64 −0.4%','#FF3B4E'],['FREEZE-OFF','HIGH','#FF3B4E']] }
+  };
+  cities = {
+    HOU:{ code:'HOU', name:'Houston, TX', hub:'GULF COAST · ERCOT', st:'TX', temp:93, feels:101, wind:'11 mph SSE', press:'29.82"', precip:'10%', cond:'HEAT ADVISORY', cc:'red', idx:78, il:'HIGH · BULLISH POWER',
+      fc:[['MON',94,76,'HOT','red'],['TUE',95,77,'HOT','red'],['WED',91,75,'STORM','amber'],['THU',87,73,'CLEAR','green'],['FRI',86,72,'CLEAR','green']],
+      sens:[['Power load / ERCOT',91,'Peak demand +6% vs 5y avg'],['Refinery run risk',55,'Cooling-water derates, 2 units'],['LNG export logistics',62,'Ship channel winds < 20kt'],['Grain port delays',38,'Elevators loading normally']] },
+    NYC:{ code:'NYC', name:'New York, NY', hub:'NORTHEAST · TRANSCO Z6', st:'NY', temp:24, feels:12, wind:'18 mph NW', press:'30.31"', precip:'35% SNOW', cond:'HARD FREEZE', cc:'cyan', idx:91, il:'EXTREME · BULLISH NG / HO',
+      fc:[['MON',26,15,'COLD','cyan'],['TUE',22,10,'SNOW','cyan'],['WED',28,18,'COLD','cyan'],['THU',33,24,'CLOUD','amber'],['FRI',38,28,'CLEAR','green']],
+      sens:[['Heating oil demand',88,'HDD +34% vs normal'],['Z6 gas basis',94,'Pipeline at 98% utilization'],['Freight / drayage',52,'Port NY/NJ icing slowdowns'],['Grain logistics',41,'Minor rail delays']] },
+    CHI:{ code:'CHI', name:'Chicago, IL', hub:'MIDWEST · GRAIN HUB', st:'IL', temp:19, feels:6, wind:'22 mph WNW', press:'30.12"', precip:'60% ICE', cond:'ICE STORM WATCH', cc:'amber', idx:83, il:'HIGH · BULLISH WHEAT',
+      fc:[['MON',21,9,'ICE','cyan'],['TUE',18,5,'SNOW','cyan'],['WED',24,12,'WIND','amber'],['THU',30,19,'CLOUD','amber'],['FRI',34,22,'CLEAR','green']],
+      sens:[['Grain logistics delays',83,'Rail dwell +19h; barge ice'],['Heating demand',76,'LDC sendout high'],['Rail network',69,'Switching yards degraded'],['Power load',48,'Within seasonal range']] },
+    RTM:{ code:'RTM', name:'Rotterdam, NL', hub:'EUROPE · ARA HUB', st:'', temp:41, feels:34, wind:'24 mph SW', press:'29.55"', precip:'70% RAIN', cond:'GALE WARNING', cc:'amber', idx:66, il:'ELEVATED · MIXED',
+      fc:[['MON',42,36,'GALE','amber'],['TUE',44,38,'RAIN','amber'],['WED',40,33,'RAIN','amber'],['THU',38,31,'CLOUD','amber'],['FRI',37,30,'CLEAR','green']],
+      sens:[['TTF gas demand',70,'Wind output soft, gas burn up'],['Rhine barge draft',81,'Low-water surcharge in effect'],['Wheat import delays',45,'Terminal wind holds, 6h avg'],['Container freight',66,'Vessel bunching at ECT']] },
+    CUS:{ code:'CUS', name:'Cushing, OK', hub:'WTI DELIVERY HUB', st:'OK', temp:28, feels:17, wind:'16 mph N', press:'30.20"', precip:'20%', cond:'COLD SNAP', cc:'cyan', idx:64, il:'ELEVATED · TIGHT STORAGE',
+      fc:[['MON',30,18,'COLD','cyan'],['TUE',27,15,'COLD','cyan'],['WED',33,21,'CLEAR','green'],['THU',41,26,'CLEAR','green'],['FRI',48,31,'CLEAR','green']],
+      sens:[['Trucked crude flow',72,'Road ice slows gathering'],['Storage tightness',61,'Tank utilization 61%'],['Pipeline throughput',44,'Normal operations'],['Wheat belt freeze',58,'KS/OK winterkill watch']] },
+    HH:{ code:'HH', name:'Henry Hub, LA', hub:'NAT GAS BENCHMARK', st:'LA', temp:68, feels:68, wind:'7 mph S', press:'29.95"', precip:'5%', cond:'MILD / CLEAR', cc:'green', idx:32, il:'LOW · SUPPLY LONG',
+      fc:[['MON',70,55,'CLEAR','green'],['TUE',72,58,'CLEAR','green'],['WED',69,56,'CLOUD','amber'],['THU',66,52,'CLEAR','green'],['FRI',64,50,'CLEAR','green']],
+      sens:[['Demand pull',28,'Gulf heating & cooling light'],['LNG feedgas',74,'Steady 14.8 Bcf/d'],['Storm risk',12,'No tropical activity'],['Pipeline flow',58,'Northbound capped at Z6']] },
+    LGB:{ code:'LGB', name:'LA / Long Beach, CA', hub:'WEST COAST PORTS', st:'CA', temp:72, feels:72, wind:'6 mph W', press:'30.02"', precip:'0%', cond:'CLEAR', cc:'green', idx:21, il:'LOW · NORMAL FLOW',
+      fc:[['MON',73,58,'CLEAR','green'],['TUE',74,59,'CLEAR','green'],['WED',71,57,'CLOUD','amber'],['THU',70,56,'CLEAR','green'],['FRI',72,58,'CLEAR','green']],
+      sens:[['Port congestion',22,'3 vessels at anchor'],['Freight rates',48,'FBX trending up +3.8%'],['Rail intermodal',19,'Clear corridors'],['Power load',31,'Mild demand']] }
+  };
+  nodes = { cush:{st:'OK',l:'CUSHING',c:'CUS',dx:0,dy:0}, hh:{st:'LA',l:'HENRY HUB',c:'HH',dx:0,dy:0}, hou:{st:'TX',l:'HOUSTON',c:'HOU',dx:6,dy:4}, chi:{st:'IL',l:'CHICAGO',c:'CHI',dx:0,dy:0}, z6:{st:'NY',l:'Z6',c:'NYC',dx:0,dy:0}, lgb:{st:'CA',l:'LGB',c:'LGB',dx:0,dy:0}, sav:{st:'GA',l:'SAV',c:null,dx:0,dy:0} };
+  pipes = [['hh','z6'],['cush','chi'],['hou','cush'],['hh','hou']];
+  ports = [['lgb','chi'],['hou','hh'],['sav','chi'],['z6','chi']];
+
+  componentDidMount() { this.t = setInterval(() => this.setState(s => ({ tick: s.tick + 1 })), 1800); this.k = e => { if (e.key === 'Escape') this.setState({ arb: false }); }; window.addEventListener('keydown', this.k); }
+  componentWillUnmount() { clearInterval(this.t); window.removeEventListener('keydown', this.k); }
+
+  X = {
+    HOU:{ hum:68, uv:9, vis:'10 mi', dew:74, aqi:92, sr:'7:12A', ss:'6:41P', until:'UNTIL 8PM', note:'Mkt link: ERCOT load +6% vs 5y avg; power futures bid.', mv:[['ERCOT PWR','+4.2%'],['HSC NG','+1.9%'],['RBOB','+0.8%']] },
+    NYC:{ hum:54, uv:2, vis:'6 mi', dew:8, aqi:41, sr:'6:58A', ss:'5:02P', until:'UNTIL 6AM', note:'Mkt link: Z6 basis +$1.40 over Henry Hub; heating oil bid.', mv:[['TRANSCO Z6','+6.1%'],['HO','+2.4%'],['NG','+2.1%']] },
+    CHI:{ hum:71, uv:1, vis:'2 mi', dew:12, aqi:55, sr:'7:06A', ss:'4:51P', until:'UNTIL 10PM', note:'Mkt link: rail dwell +19h; wheat logistics risk.', mv:[['ZW','+1.3%'],['ZC','+0.6%'],['RAIL DWELL','+19h']] },
+    RTM:{ hum:86, uv:1, vis:'4 mi', dew:37, aqi:48, sr:'8:01A', ss:'5:12P', until:'UNTIL 3PM', note:'Mkt link: low wind output lifts TTF; Rhine barge surcharge.', mv:[['TTF','+3.4%'],['ARA GASOIL','+1.1%'],['RHINE FRT','+8%']] },
+    CUS:{ hum:49, uv:3, vis:'10 mi', dew:14, aqi:30, sr:'7:21A', ss:'5:49P', until:'UNTIL 9AM', note:'Mkt link: road ice slows trucked crude into storage.', mv:[['WTI','−0.4%'],['CL M1–M2','+$0.32'],['TANK UTIL','61%']] },
+    HH:{ hum:62, uv:5, vis:'10 mi', dew:56, aqi:38, sr:'6:58A', ss:'5:44P', until:'NO ACTIVE ALERTS', note:'Mkt link: mild Gulf keeps supply long; spread to Z6 wide.', mv:[['HENRY HUB','+2.1%'],['LNG FEED','14.8'],['NG M1','+2.1%']] },
+    LGB:{ hum:58, uv:6, vis:'10 mi', dew:52, aqi:64, sr:'6:44A', ss:'5:21P', until:'NO ACTIVE ALERTS', note:'Mkt link: normal port flow; FBX West Coast +3.8%.', mv:[['FBX WC','+3.8%'],['ANCHORAGE','3'],['DIESEL','−0.3%']] }
+  };
+  extra(c) {
+    const x = this.X[c.code], G = this.G, p = parseInt(c.precip) || 0;
+    const sg = v => v[0] === '+' ? G.green : v[0] === '−' ? G.red : '#E6E8EC';
+    const hrs = ['NOW','10A','11A','12P','1P','2P','3P','4P','5P','6P','7P','8P'];
+    const hourly = hrs.map((t, i) => ({ t, temp: c.temp + Math.round(Math.sin((i + 9 - 15) / 24 * 6.283) * 5 + 5), p: Math.max(0, p - 8 + ((i * 7) % 16)) + '%' }));
+    const days = ['TODAY','TUE','WED','THU','FRI','SAT','SUN','MON','TUE','WED'];
+    const rows = days.map((d, i) => { const f = c.fc[i % 5]; const dr = Math.round(Math.sin(i * 1.3) * 4); return { d, c: f[3], col: { red: G.red, amber: G.amber, cyan: G.cyan, green: G.green }[f[4]], hi: f[1] + dr, lo: f[2] + dr }; });
+    const mn = Math.min(...rows.map(r => r.lo)), mx = Math.max(...rows.map(r => r.hi)), rg = mx - mn || 1;
+    const ten = rows.map(r => ({ ...r, l: ((r.lo - mn) / rg * 100).toFixed(0) + '%', w: Math.max(8, (r.hi - r.lo) / rg * 100).toFixed(0) + '%' }));
+    const bars = hrs.map((_, i) => Math.max(6, Math.min(100, p * (0.5 + 0.5 * Math.sin(i * 0.9 + 1)) + 8)).toFixed(0) + '%');
+    const uvc = x.uv >= 8 ? G.red : x.uv >= 5 ? G.amber : '#E6E8EC', aqc = x.aqi > 90 ? G.amber : G.green;
+    const conds = [['UV INDEX', x.uv + (x.uv >= 8 ? ' V.HIGH' : x.uv >= 5 ? ' MOD' : ' LOW'), uvc], ['HUMIDITY', x.hum + '%', '#E6E8EC'], ['VISIBILITY', x.vis, '#E6E8EC'], ['DEW POINT', x.dew + '°', '#E6E8EC'], ['AIR QUALITY', 'AQI ' + x.aqi, aqc], ['SUN', x.sr + ' / ' + x.ss, '#E6E8EC']].map(a => ({ k: a[0], v: a[1], col: a[2] }));
+    return { hourly, ten, bars, conds, until: x.until, alertNote: x.note, movers: x.mv.map(m => ({ k: m[0], v: m[1], col: sg(m[1]) })) };
+  }
+  ctr(st) { const g = this.grid[st]; return [g[0] * 32 + 15, g[1] * 32 + 15]; }
+  riskCol(idx) { return idx >= 85 ? this.G.red : idx >= 60 ? this.G.amber : idx >= 40 ? this.G.cyan : this.G.green; }
+
+  renderVals() {
+    const S = this.state, G = this.G, set = o => () => this.setState(o);
+    const cur = this.cities[S.city];
+    const q = [['NG', 3.42, 2.1, 3], ['CL', 78.64, -0.4, 2], ['ZW', 6.12, 1.3, 2], ['FBX', 2184, 3.8, 0]].map((b, i) => {
+      const w = Math.sin(S.tick * 0.8 + i * 2) * 0.012, p = b[1] * (1 + w), c = b[2] + w * 100;
+      return { sym: b[0], price: p.toFixed(b[3]).replace(/\B(?=(\d{3})+(?!\d))/g, ','), chg: (c >= 0 ? '▲ +' : '▼ ') + c.toFixed(1) + '%', col: c >= 0 ? G.green : G.red };
+    });
+    const q2 = S.query.trim().toLowerCase();
+    const results = q2 ? Object.values(this.cities).filter(c => (c.code + c.name + c.hub).toLowerCase().includes(q2)).slice(0, 4).map(c => ({ code: c.code, name: c.name, hub: c.st || 'EU', pick: () => this.setState({ city: c.code, tab: 'city', query: '' }) })) : [];
+
+    const layerDefs = [['futures', 'FUTURES OVERLAY'], ['pipeline', 'PIPELINE FLOW'], ['ports', 'PORT CORRIDORS'], ['freeze', 'CROP FREEZE']];
+    const layers = layerDefs.map(l => { const on = S.layer === l[0]; return { label: l[1], pick: set({ layer: l[0] }), bd: on ? G.amber : '#262A33', bg: on ? 'rgba(255,176,0,.14)' : '#14161C', fg: on ? G.amber : '#9AA1AF' }; });
+    const lt = { futures: 'FUTURES Δ%', pipeline: 'ENERGY FLOW', ports: 'SHIPPING', freeze: 'FREEZE RISK' }[S.layer];
+    const lg = { futures: 'Green = bullish impact · Red = bearish · Tap a state', pipeline: 'Dashed = gas · Solid = crude · Pins = hubs', ports: 'Cyan routes = freight corridors · Pins = ports', freeze: 'Cyan intensity = hard-freeze risk to winter wheat' }[S.layer];
+
+    const tiles = Object.keys(this.grid).map(id => {
+      const g = this.grid[id], c = this.chg[id] || 0, f = this.freeze[id] || 0;
+      let bg = '#171A21', bd = '#262A33', fg = '#7C8494';
+      if (S.layer === 'futures') { const a = Math.min(Math.abs(c) / 7, 1) * 0.55 + 0.08; bg = c > 0.2 ? `rgba(0,255,102,${a})` : c < -0.2 ? `rgba(255,59,78,${a})` : '#171A21'; fg = c ? '#E6E8EC' : '#7C8494'; }
+      else if (S.layer === 'freeze') { bg = f ? `rgba(34,211,238,${0.15 + f * 0.2})` : '#171A21'; fg = f ? '#E6E8EC' : '#7C8494'; }
+      if (S.region === id) bd = G.amber;
+      return { id, x: g[0] * 32, y: g[1] * 32, bg, bd, fg, pick: set({ region: id }) };
+    });
+    const nodeKeys = { futures: ['cush', 'hh', 'hou', 'chi', 'z6'], pipeline: ['cush', 'hh', 'hou', 'chi', 'z6'], ports: ['lgb', 'hou', 'sav', 'z6', 'chi'], freeze: ['chi', 'cush'] }[S.layer];
+    const pins = nodeKeys.map(k => { const n = this.nodes[k], p = this.ctr(n.st), idx = n.c ? this.cities[n.c].idx : 40;
+      return { x: p[0] + n.dx, y: p[1] + n.dy, label: n.l, col: this.riskCol(idx), pick: () => this.setState(n.c ? { city: n.c, region: n.st } : { region: n.st }) }; });
+    const pl = S.layer === 'pipeline' ? this.pipes : S.layer === 'ports' ? this.ports : [];
+    const lines = pl.map((e, i) => { const a = this.ctr(this.nodes[e[0]].st), b = this.ctr(this.nodes[e[1]].st); const gas = S.layer === 'pipeline' && i % 2 === 0;
+      return { x1: a[0], y1: a[1], x2: b[0], y2: b[1], col: S.layer === 'ports' ? G.cyan : gas ? G.amber : '#FF8A3D', dash: gas || S.layer === 'ports' ? '5 4' : '0' }; });
+
+    let region = null;
+    if (S.region) {
+      const i = this.info[S.region] || { c: null, text: 'No acute weather-driven exposure. Local supply, freight and power benchmarks trading in range.', col: '#7C8494', rows: [['EXPOSURE','LOW','#00FF66'],['BASIS','FLAT','#E6E8EC'],['ALERTS','NONE','#E6E8EC']] };
+      const c = i.c, saved = c && S.watch.includes(c);
+      region = { title: this.names[S.region] || S.region, text: i.text, col: i.col, rows: i.rows.map(r => ({ k: r[0], v: r[1], col: r[2] })),
+        open: () => this.setState({ city: c || S.city, tab: 'city' }),
+        watchLabel: !c ? 'NO HUB' : saved ? '★ SAVED' : '☆ SAVE HUB',
+        watch: () => c && this.setState(s => ({ watch: s.watch.includes(c) ? s.watch.filter(x => x !== c) : [...s.watch, c] })) };
+    }
+
+    const bd = c => ({ code: c.code });
+    const cityTabs = Object.values(this.cities).map(c => { const on = c.code === S.city; return { code: c.code, pick: set({ city: c.code }), bd: on ? G.amber : '#262A33', bg: on ? 'rgba(255,176,0,.14)' : '#14161C', fg: on ? G.amber : '#E6E8EC' }; });
+    const ccol = { red: G.red, amber: G.amber, cyan: G.cyan, green: G.green };
+    const ic = this.riskCol(cur.idx);
+    const city = { ...cur, condCol: ccol[cur.cc], idxCol: ic, idxLabel: cur.il, idx: cur.idx, arc: `${(cur.idx / 100 * 220).toFixed(0)} 300`,
+      fc: cur.fc.map(f => ({ d: f[0], hi: f[1], lo: f[2], c: f[3], col: ccol[f[4]] })),
+      sens: cur.sens.map(s => ({ label: s[0], v: s[1], w: s[1] + '%', note: s[2], col: this.riskCol(s[1]) })) };
+
+    Object.assign(city, this.extra(cur));
+    const watch = S.watch.map(code => { const c = this.cities[code], on = code === S.city; return { name: c.name, sub: c.hub, temp: c.temp + '°F', idx: c.idx, col: this.riskCol(c.idx), dot: this.riskCol(c.idx), edge: on ? G.amber : 'transparent', bg: on ? '#171A21' : 'transparent', pick: () => this.setState({ city: code, tab: 'city' }) }; });
+
+    const tabs = [['city', '☁', 'HOME'], ['map', '◉', 'MAP'], ['watch', '★', 'WATCH']].map(t => ({ icon: t[1], label: t[2], col: S.tab === t[0] ? G.amber : '#7C8494', pick: set({ tab: t[0] }) }));
+    tabs.push({ icon: '⚡', label: 'RADAR', col: S.arb ? G.amber : '#7C8494', pick: set({ arb: true }) });
+
+    const arbs = [
+      ['NG · Henry Hub vs Transco Z6', 'NY freeze vs mild Gulf: Z6 basis blowout', '$3.42', '$4.82', '+$1.40', G.green, '88%'],
+      ['Power · ERCOT vs PJM West', 'Houston 90°F+ load against mild mid-Atlantic', '$96', '$54', '+$42', G.green, '74%'],
+      ['WTI Cushing vs Gulf Coast', 'Plains cold snap slows trucked crude', '$78.64', '$79.31', '−$0.67', G.red, '61%'],
+      ['Wheat · KC HRW vs Chicago SRW', 'Plains hard freeze, Chicago ice delays', '$6.48', '$6.12', '+$0.36', G.green, '69%']
+    ].map(a => ({ pair: a[0], driver: a[1], a: a[2], b: a[3], spread: a[4], col: a[5], conf: a[6] }));
+
+    const swatches = [['#0D0E12','Canvas'],['#14161C','Card'],['#262A33','Hairline'],['#E6E8EC','Ink'],['#FFB000','Amber · alert, CTA'],['#00FF66','Gain, bullish'],['#FF3B4E','Shock, loss'],['#22D3EE','Freeze, cold']].map(s => ({ hex: s[0], use: s[1] }));
+
+    return { query: S.query, onQuery: e => this.setState({ query: e.target.value }), tape: [...q, ...q, ...q, ...q], results, hasResults: results.length > 0,
+      isMap: S.tab === 'map', isCity: S.tab === 'city', isWatch: S.tab === 'watch',
+      layers, layerTitle: lt, legendText: lg, tiles, pins, lines, region, hasRegion: !!region, closeRegion: set({ region: null }),
+      cityTabs, city, watch, watchCount: S.watch.length + ' HUBS', tabs,
+      openArb: set({ arb: true }), closeArb: set({ arb: false }), arbOpen: S.arb, stop: e => e.stopPropagation(), arbs, topSpread: '1.40', swatches };
+  }
+}
+</script>
+</body>
+</html>
