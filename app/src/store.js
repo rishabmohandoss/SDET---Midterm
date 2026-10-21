@@ -3,7 +3,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { THEMES } from './theme';
 import * as auth from './auth';
 import * as backend from './backend';
-import { registerForPush } from './push';
+import { registerForPush, localAlert } from './push';
+import { CITIES } from './data';
 import { configured } from './parse';
 
 const KEY = 'terminalcast:v1';
@@ -81,14 +82,16 @@ export function AppProvider({ children }) {
     logIn: async (f) => set({ user: await auth.logIn(f) }),
     resetPassword: auth.resetPassword,
     logOut: async () => { await auth.logOut(); token.current = null; set({ ...DEFAULTS, user: null }); setSync(configured ? 'idle' : 'mock'); setPushStatus('Not registered'); },
-    // Test push goes through Back4App Cloud Code when possible; otherwise shows the local banner.
+    // Test push goes through Back4App Cloud Code -> Expo push -> iPhone notification.
+    // If that path is unavailable, fall back to a local system notification so the phone still shows one.
     sendTest: async (city) => {
+      const c = CITIES[city];
+      const fallback = async (why) => { await localAlert(`${city} · ${c.cond} ${c.until}`, `${c.note} ESI ${c.idx}.`).catch(() => {}); return why; };
       if (configured && token.current) {
-        try { const r = await backend.sendTestAlert(city); return `Cloud Code sent ${r.sent}/${r.recipients}`; }
-        catch (e) { console.log('[B4A] test push failed', e?.message); setToast(city); return 'Cloud Code failed, showing local preview'; }
+        try { const r = await backend.sendTestAlert(city); return r.sent ? `Sent via Back4App (${r.sent}/${r.recipients})` : `Back4App found ${r.recipients} device(s), sent ${r.sent}`; }
+        catch (e) { console.log('[B4A] test push failed', e?.message); return fallback(`Cloud Code error: ${e?.message}. Sent a local notification instead`); }
       }
-      setToast(city);
-      return configured ? 'No push token, showing local preview' : 'Local preview (no Back4App keys)';
+      return fallback(configured ? `No push token (${pushStatus}). Sent a local notification` : 'Local notification (no Back4App keys)');
     },
     addCity: (k) => setS((p) => ({ ...p, saved: p.saved.includes(k) ? p.saved : [...p.saved, k], rules: { ...p.rules, [k]: true } })),
     removeCity: (k) => setS((p) => { const saved = p.saved.filter((x) => x !== k); return { ...p, saved, city: p.city === k && saved.length ? saved[0] : p.city }; }),

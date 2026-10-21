@@ -26,3 +26,11 @@ export async function registerForPush() {
     return { error: e?.message || 'Push registration failed.' };
   }
 }
+
+// System notification on this device without a server. Works in Expo Go; used when Cloud Code push is unavailable.
+export async function localAlert(title, body) {
+  await Notifications.scheduleNotificationAsync({
+    content: { title, body, sound: 'default' },
+    trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: 2 },
+  });
+}
