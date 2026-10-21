@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TerminalCast Design</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Theme tokens. Only surfaces + accent change per theme; semantic colors (up/down/cold) stay fixed. */
+.phone{--bg:#0D0E12;--card:#14161C;--raised:#171A21;--line:#262A33;--line2:#1d2028;--strong:#333845;
+  --ink:#E6E8EC;--body:#C4C8D0;--muted:#7C8494;--acc:#FFB000;--acc-hi:#FFC638;--acc-soft:rgba(255,176,0,.14);--acc-glow:rgba(255,176,0,.25);
+  --up:#00FF66;--down:#FF3B4E;--cold:#22D3EE;--orange:#FF8A3D}
+.phone[data-theme="arctic"]{--bg:#0A1016;--card:#101820;--raised:#142029;--line:#1F3340;--line2:#172833;--strong:#2B4655;--muted:#7C93A3;
+  --acc:#22D3EE;--acc-hi:#67E3F5;--acc-soft:rgba(34,211,238,.14);--acc-glow:rgba(34,211,238,.25);--cold:#FFB000}
+.phone[data-theme="violet"]{--bg:#0E0C14;--card:#16131F;--raised:#1B1727;--line:#2B2540;--line2:#211C33;--strong:#3A3256;--muted:#8A82A6;
+  --acc:#A78BFA;--acc-hi:#C4B0FF;--acc-soft:rgba(167,139,250,.16);--acc-glow:rgba(167,139,250,.28)}
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:#07080B;color:#E6E8EC;font-family:'IBM Plex Sans',Helvetica,sans-serif}
+button{font:inherit;color:inherit;cursor:pointer}
+::-webkit-scrollbar{display:none}
+@keyframes tape{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes drop{from{transform:translateY(-120%)}to{transform:translateY(0)}}
+
+.page{display:flex;flex-wrap:wrap;gap:48px;justify-content:center;align-items:flex-start;padding:40px 24px;min-height:100vh}
+.flow{width:200px;display:flex;flex-direction:column;gap:6px;position:sticky;top:40px}
+.flow h3,.ds h3{font:600 10px 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8494;margin:14px 0 4px}
+.flow button{text-align:left;background:#14161C;border:1px solid #262A33;border-radius:8px;padding:9px 12px;font:500 12px 'IBM Plex Mono',monospace;color:#C4C8D0}
+.flow button.on{border-color:#FFB000;color:#FFB000;background:rgba(255,176,0,.12)}
+.flow .brand{font:600 11px 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#FFB000}
+
+.device{position:relative;width:414px;height:868px;flex:none;border-radius:64px;background:#1a1c22;padding:12px;box-shadow:0 0 0 2px #2c2f38,0 40px 90px rgba(0,0,0,.7)}
+.phone{position:relative;width:390px;height:844px;border-radius:52px;background:var(--bg);overflow:hidden;display:flex;flex-direction:column;color:var(--ink)}
+.status{height:54px;flex:none;display:flex;justify-content:space-between;align-items:flex-end;padding:0 32px 8px;font:600 15px 'IBM Plex Sans',sans-serif;position:relative}
+.status .notch{position:absolute;left:50%;top:11px;transform:translateX(-50%);width:120px;height:34px;border-radius:20px;background:#000}
+.status .r{font:500 11px 'IBM Plex Mono',monospace}
+.body{flex:1;min-height:0;overflow:auto;position:relative}
+.home-ind{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:var(--ink);z-index:30}
+
+.mono{font-family:'IBM Plex Mono',monospace}
+.lbl{font:600 11px 'IBM Plex Mono',monospace;letter-spacing:.1em;color:var(--acc)}
+.sub{font:500 10px 'IBM Plex Mono',monospace;color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}
+.stack{display:flex;flex-direction:column;gap:12px;padding:14px}
+.row{display:flex;justify-content:space-between;align-items:center}
+.cell{background:var(--bg);padding:9px 10px}
+.cell .k{font:500 9px 'IBM Plex Mono',monospace;color:var(--muted)}
+.cell .v{font:500 12px 'IBM Plex Mono',monospace;margin-top:3px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border-radius:8px;overflow:hidden}
+
+.chip{flex:none;height:36px;padding:0 14px;font:500 12px 'IBM Plex Mono',monospace;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px}
+.chip.on{border-color:var(--acc);background:var(--acc-soft);color:var(--acc)}
+.btn{height:48px;border-radius:12px;border:1px solid var(--strong);background:transparent;font:500 13px 'IBM Plex Mono',monospace;width:100%}
+.btn.pri{background:var(--acc);border:0;color:var(--bg);font:600 15px 'IBM Plex Sans',sans-serif;box-shadow:0 0 28px var(--acc-glow)}
+.btn.pri:active{background:var(--acc-hi)}
+.btn.out{border-color:var(--acc);color:var(--acc)}
+.btn.small{height:44px;width:auto;padding:0 14px;border-radius:10px;font-size:12px}
+
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font:600 10px 'IBM Plex Mono',monospace;letter-spacing:.1em;color:var(--muted)}
+.field input{height:48px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:0 14px;color:var(--ink);font:400 14px 'IBM Plex Mono',monospace;outline:0}
+.field input:focus{border-color:var(--acc)}
+.err{display:none;padding:10px 12px;border:1px solid var(--down);background:rgba(255,59,78,.1);border-radius:10px;font:500 12px 'IBM Plex Mono',monospace;color:var(--down)}
+.err.show{display:block}
+
+.tabbar{flex:none;display:grid;grid-template-columns:repeat(5,1fr);height:84px;padding:6px 4px 26px;background:color-mix(in srgb,var(--bg) 96%,transparent);border-top:1px solid var(--line)}
+.tabbar button{background:transparent;border:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--muted)}
+.tabbar button.on{color:var(--acc)}
+.tabbar .ic{font:600 16px 'IBM Plex Mono',monospace}
+.tabbar .tl{font:600 9px 'IBM Plex Mono',monospace;letter-spacing:.08em}
+
+.cmd{display:flex;align-items:center;gap:8px;height:40px;padding:0 12px;background:var(--card);border:1px solid var(--line);border-radius:10px}
+.cmd .p{font:600 13px 'IBM Plex Mono',monospace;color:var(--acc)}
+.cmd input{flex:1;min-width:0;background:transparent;border:0;outline:0;color:var(--ink);font:400 13px 'IBM Plex Mono',monospace}
+.live{display:flex;align-items:center;gap:5px;font:600 10px 'IBM Plex Mono',monospace;color:var(--up)}
+.live i{width:6px;height:6px;border-radius:50%;background:var(--up);animation:pulse 1.6s infinite}
+.ticker{height:30px;flex:none;overflow:hidden;background:var(--card);border-top:1px solid var(--line);border-bottom:1px solid var(--line);display:flex;align-items:center}
+.ticker .t{display:flex;width:max-content;animation:tape 28s linear infinite}
+.ticker .i{display:flex;gap:6px;padding:0 16px;border-right:1px solid var(--line);font:500 12px 'IBM Plex Mono',monospace;white-space:nowrap}
+
+.item{display:grid;grid-template-columns:10px 1fr auto auto;gap:12px;align-items:center;min-height:64px;padding:8px 8px 8px 16px;border-top:1px solid var(--line2);border-left:3px solid transparent}
+.item.on{border-left-color:var(--acc);background:var(--raised)}
+.item .nm{font:500 14px 'IBM Plex Sans',sans-serif}
+.x{width:44px;height:44px;border:0;background:transparent;color:var(--muted);font:500 18px 'IBM Plex Mono',monospace}
+
+.sw{position:relative;width:48px;height:28px;border-radius:14px;border:1px solid var(--strong);background:var(--bg);flex:none;padding:0}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:var(--muted);transition:.15s}
+.sw.on{background:var(--acc-soft);border-color:var(--acc)}
+.sw.on::after{left:23px;background:var(--acc)}
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{flex:1;height:36px;background:var(--card);border:0;border-right:1px solid var(--line);font:500 11px 'IBM Plex Mono',monospace;color:var(--muted)}
+.seg button:last-child{border-right:0}
+.seg button.on{background:var(--acc-soft);color:var(--acc)}
+.set{display:flex;justify-content:space-between;align-items:center;min-height:52px;padding:6px 14px;border-top:1px solid var(--line2);gap:12px}
+.set:first-of-type{border-top:0}
+.set .n{font:500 14px 'IBM Plex Sans',sans-serif}
+.set .d{font:400 11px 'IBM Plex Mono',monospace;color:var(--muted);margin-top:2px}
+.group{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.group .gh{padding:12px 14px 8px}
+.theme{flex:1;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:6px;align-items:center}
+.theme.on{border-color:var(--acc)}
+.theme .sq{width:100%;height:28px;border-radius:6px;display:flex;overflow:hidden}
+.theme .sq i{flex:1}
+.theme span{font:600 9px 'IBM Plex Mono',monospace;letter-spacing:.06em}
+
+.push{position:absolute;left:10px;right:10px;top:8px;z-index:40;background:rgba(30,32,40,.97);border:1px solid var(--strong);border-radius:20px;padding:12px 14px;display:flex;gap:10px;animation:drop .35s ease-out;box-shadow:0 12px 30px rgba(0,0,0,.6)}
+.push .ico{width:36px;height:36px;border-radius:9px;background:var(--acc);color:var(--bg);display:flex;align-items:center;justify-content:center;font:600 15px 'IBM Plex Mono',monospace;flex:none}
+.sheet-scrim{position:absolute;inset:0;background:rgba(5,6,8,.72);z-index:20;display:flex;align-items:flex-end}
+.sheet{width:100%;max-height:86%;overflow:auto;background:var(--card);border-top:2px solid var(--acc);border-radius:24px 24px 0 0;padding-bottom:34px}
+.legend{display:flex;gap:10px;flex-wrap:wrap;padding:14px 16px;font:400 10px 'IBM Plex Mono',monospace;color:var(--muted)}
+.legend i{display:inline-block;width:8px;height:8px;margin-right:5px}
+
+.ds{width:420px;max-width:100%;display:flex;flex-direction:column;gap:6px}
+.ds .sw8{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.ds .sc{border:1px solid #262A33;border-radius:8px;overflow:hidden;background:#14161C}
+.ds .sc div:first-child{height:34px}
+.ds .sc div:last-child{padding:6px 8px;font:600 10px 'IBM Plex Mono',monospace}
+.ds .sc small{display:block;font:400 10px 'IBM Plex Sans',sans-serif;color:#7C8494;margin-top:2px}
+.ds p{font:400 13px/1.45 'IBM Plex Sans',sans-serif;color:#C4C8D0;margin:0 0 6px}
+</style>
+</head>
+<body>
+<div class="page">
+  <nav class="flow" id="flow"></nav>
+  <div class="device"><div class="phone" id="phone" data-theme="amber"></div></div>
+  <aside class="ds" id="ds"></aside>
+</div>
+
+<script>
+/* ---------- mock data (illustrative only) ---------- */
+const C = {
+  HOU:{name:'Houston, TX',hub:'GULF COAST · ERCOT',temp:93,feels:101,wind:'11 mph SSE',baro:'29.82"',precip:'10%',cond:'HEAT ADVISORY',cc:'down',idx:78,il:'HIGH · BULLISH POWER',until:'UNTIL 8PM',note:'Mkt link: ERCOT load +6% vs 5y avg; power futures bid.',
+    mv:[['ERCOT PWR','+4.2%'],['HSC NG','+1.9%'],['RBOB','+0.8%']],fc:[['MON',94,76,'HOT','down'],['TUE',95,77,'HOT','down'],['WED',91,75,'STORM','acc'],['THU',87,73,'CLEAR','up'],['FRI',86,72,'CLEAR','up']],
+    sens:[['Power load / ERCOT',91,'Peak demand +6% vs 5y avg'],['Refinery run risk',55,'Cooling-water derates, 2 units'],['LNG export logistics',62,'Ship channel winds < 20kt'],['Grain port delays',38,'Elevators loading normally']]},
+  NYC:{name:'New York, NY',hub:'NORTHEAST · TRANSCO Z6',temp:24,feels:12,wind:'18 mph NW',baro:'30.31"',precip:'35% SNOW',cond:'HARD FREEZE',cc:'cold',idx:91,il:'EXTREME · BULLISH NG / HO',until:'UNTIL 6AM',note:'Mkt link: Z6 basis +$1.40 over Henry Hub; heating oil bid.',
+    mv:[['TRANSCO Z6','+6.1%'],['HO','+2.4%'],['NG','+2.1%']],fc:[['MON',26,15,'COLD','cold'],['TUE',22,10,'SNOW','cold'],['WED',28,18,'COLD','cold'],['THU',33,24,'CLOUD','acc'],['FRI',38,28,'CLEAR','up']],
+    sens:[['Heating oil demand',88,'HDD +34% vs normal'],['Z6 gas basis',94,'Pipeline at 98% utilization'],['Freight / drayage',52,'Port NY/NJ icing slowdowns'],['Grain logistics',41,'Minor rail delays']]},
+  CHI:{name:'Chicago, IL',hub:'MIDWEST · GRAIN HUB',temp:19,feels:6,wind:'22 mph WNW',baro:'30.12"',precip:'60% ICE',cond:'ICE STORM WATCH',cc:'acc',idx:83,il:'HIGH · BULLISH WHEAT',until:'UNTIL 10PM',note:'Mkt link: rail dwell +19h; wheat logistics risk.',
+    mv:[['ZW','+1.3%'],['ZC','+0.6%'],['RAIL DWELL','+19h']],fc:[['MON',21,9,'ICE','cold'],['TUE',18,5,'SNOW','cold'],['WED',24,12,'WIND','acc'],['THU',30,19,'CLOUD','acc'],['FRI',34,22,'CLEAR','up']],
+    sens:[['Grain logistics delays',83,'Rail dwell +19h; barge ice'],['Heating demand',76,'LDC sendout high'],['Rail network',69,'Switching yards degraded'],['Power load',48,'Within seasonal range']]},
+  RTM:{name:'Rotterdam, NL',hub:'EUROPE · ARA HUB',temp:41,feels:34,wind:'24 mph SW',baro:'29.55"',precip:'70% RAIN',cond:'GALE WARNING',cc:'acc',idx:66,il:'ELEVATED · MIXED',until:'UNTIL 3PM',note:'Mkt link: low wind output lifts TTF; Rhine barge surcharge.',
+    mv:[['TTF','+3.4%'],['ARA GASOIL','+1.1%'],['RHINE FRT','+8%']],fc:[['MON',42,36,'GALE','acc'],['TUE',44,38,'RAIN','acc'],['WED',40,33,'RAIN','acc'],['THU',38,31,'CLOUD','acc'],['FRI',37,30,'CLEAR','up']],
+    sens:[['TTF gas demand',70,'Wind output soft, gas burn up'],['Rhine barge draft',81,'Low-water surcharge in effect'],['Wheat import delays',45,'Terminal wind holds, 6h avg'],['Container freight',66,'Vessel bunching at ECT']]},
+  CUS:{name:'Cushing, OK',hub:'WTI DELIVERY HUB',temp:28,feels:17,wind:'16 mph N',baro:'30.20"',precip:'20%',cond:'COLD SNAP',cc:'cold',idx:64,il:'ELEVATED · TIGHT STORAGE',until:'UNTIL 9AM',note:'Mkt link: road ice slows trucked crude into storage.',
+    mv:[['WTI','−0.4%'],['CL M1–M2','+$0.32'],['TANK UTIL','61%']],fc:[['MON',30,18,'COLD','cold'],['TUE',27,15,'COLD','cold'],['WED',33,21,'CLEAR','up'],['THU',41,26,'CLEAR','up'],['FRI',48,31,'CLEAR','up']],
+    sens:[['Trucked crude flow',72,'Road ice slows gathering'],['Storage tightness',61,'Tank utilization 61%'],['Pipeline throughput',44,'Normal operations'],['Wheat belt freeze',58,'KS/OK winterkill watch']]},
+  HH:{name:'Henry Hub, LA',hub:'NAT GAS BENCHMARK',temp:68,feels:68,wind:'7 mph S',baro:'29.95"',precip:'5%',cond:'MILD / CLEAR',cc:'up',idx:32,il:'LOW · SUPPLY LONG',until:'NO ACTIVE ALERTS',note:'Mkt link: mild Gulf keeps supply long; spread to Z6 wide.',
+    mv:[['HENRY HUB','+2.1%'],['LNG FEED','14.8'],['NG M1','+2.1%']],fc:[['MON',70,55,'CLEAR','up'],['TUE',72,58,'CLEAR','up'],['WED',69,56,'CLOUD','acc'],['THU',66,52,'CLEAR','up'],['FRI',64,50,'CLEAR','up']],
+    sens:[['Demand pull',28,'Gulf heating & cooling light'],['LNG feedgas',74,'Steady 14.8 Bcf/d'],['Storm risk',12,'No tropical activity'],['Pipeline flow',58,'Northbound capped at Z6']]},
+  LGB:{name:'LA / Long Beach, CA',hub:'WEST COAST PORTS',temp:72,feels:72,wind:'6 mph W',baro:'30.02"',precip:'0%',cond:'CLEAR',cc:'up',idx:21,il:'LOW · NORMAL FLOW',until:'NO ACTIVE ALERTS',note:'Mkt link: normal port flow; FBX West Coast +3.8%.',
+    mv:[['FBX WC','+3.8%'],['ANCHORAGE','3'],['DIESEL','−0.3%']],fc:[['MON',73,58,'CLEAR','up'],['TUE',74,59,'CLEAR','up'],['WED',71,57,'CLOUD','acc'],['THU',70,56,'CLEAR','up'],['FRI',72,58,'CLEAR','up']],
+    sens:[['Port congestion',22,'3 vessels at anchor'],['Freight rates',48,'FBX trending up +3.8%'],['Rail intermodal',19,'Clear corridors'],['Power load',31,'Mild demand']]}
+};
+const GRID={ME:[10,0],VT:[9,1],NH:[10,1],WA:[0,1],ID:[1,1],MT:[2,1],ND:[3,1],MN:[4,1],WI:[5,1],MI:[6,1],NY:[8,1],MA:[10,2],OR:[0,2],NV:[1,2],WY:[2,2],SD:[3,2],IA:[4,2],IL:[5,2],IN:[6,2],OH:[7,2],PA:[8,2],NJ:[9,2],CA:[0,3],UT:[1,3],CO:[2,3],NE:[3,3],MO:[4,3],KY:[5,3],WV:[6,3],VA:[7,3],MD:[8,3],DE:[9,3],AZ:[1,4],NM:[2,4],KS:[3,4],AR:[4,4],TN:[5,4],NC:[6,4],SC:[7,4],OK:[3,5],LA:[4,5],MS:[5,5],AL:[6,5],GA:[7,5],TX:[3,6],FL:[8,6]};
+const CHG={TX:4.2,NY:6.1,NJ:5.4,PA:3.1,OK:1.2,LA:2.0,IL:0.8,OH:1.4,MA:5.8,MI:2.2,MN:1.6,WI:1.3,GA:1.1,FL:0.3,ND:-1.1,SD:-0.7,CA:-0.6,AZ:-1.2,NV:-0.4};
+const FRZ={ND:3,MT:3,MN:2,SD:2,WI:2,MI:1,NY:2,VT:2,NH:2,ME:2,WY:1,NE:1,KS:1,OK:1,IL:2};
+const NODES={cush:['OK','CUSHING','CUS'],hh:['LA','HENRY HUB','HH'],hou:['TX','HOUSTON','HOU'],chi:['IL','CHICAGO','CHI'],z6:['NY','Z6','NYC'],lgb:['CA','LGB','LGB'],sav:['GA','SAV',null]};
+const PIPES=[['hh','z6'],['cush','chi'],['hou','cush'],['hh','hou']], PORTS=[['lgb','chi'],['hou','hh'],['sav','chi'],['z6','chi']];
+const REGION={
+  TX:['Texas Gulf Coast','90°F+ heat wave spiking regional grid load; ERCOT power futures +4.2%. Gulf refinery runs trimmed on cooling-water limits.','down','HOU',[['ERCOT NORTH DA','$96.40 +4.2%','up'],['HSC NAT GAS','$3.18 +1.9%','up'],['REFINERY RISK','HIGH','down']]],
+  NY:['New York · Transco Z6','Freezing temperatures drive heating demand; Z6 basis blown out against mild Gulf supply.','cold','NYC',[['TRANSCO Z6','$4.82 +6.1%','up'],['HEATING OIL','$2.91 +2.4%','up'],['PIPELINE UTIL.','98%','down']]],
+  OK:['Oklahoma · Cushing','Cushing storage tight; cold snap in the Plains slows trucked barrels.','acc','CUS',[['WTI CUSHING','$78.64 −0.4%','down'],['TANK UTIL.','61%','acc'],['CL M1–M2','+$0.32','up']]],
+  IL:['Illinois · Chicago','Sub-freezing snap and ice delay rail and barge grain movements.','acc','CHI',[['ZW CHICAGO','$6.12 +1.3%','up'],['RAIL DWELL','+19h','down'],['BARGE FREIGHT','$14.20/t','acc']]],
+  LA:['Louisiana · Henry Hub','Henry Hub long on mild Gulf temps and steady LNG feedgas.','up','HH',[['HENRY HUB','$3.42 +2.1%','up'],['LNG FEEDGAS','14.8 Bcf/d','ink'],['STORM RISK','LOW','up']]],
+  CA:['California · LA/Long Beach','Clear and mild. Port throughput normal; container rates easing.','up','LGB',[['FBX WEST COAST','$2,184 +3.8%','up'],['AT ANCHOR','3 vessels','up'],['PORT DELAY','0.4 d','up']]]
+};
+const ARBS=[['NG · Henry Hub vs Transco Z6','NY freeze vs mild Gulf: Z6 basis blowout','$3.42','$4.82','+$1.40','up','88%'],['Power · ERCOT vs PJM West','Houston 90°F+ load against mild mid-Atlantic','$96','$54','+$42','up','74%'],['WTI Cushing vs Gulf Coast','Plains cold snap slows trucked crude','$78.64','$79.31','−$0.67','down','61%'],['Wheat · KC HRW vs Chicago SRW','Plains hard freeze, Chicago ice delays','$6.48','$6.12','+$0.36','up','69%']];
+
+/* ---------- state ---------- */
+const S = {screen:'login',tab:'home',city:'HOU',saved:['HOU','NYC','CHI','RTM'],layer:'futures',region:null,arb:false,query:'',
+  user:{name:'rishab',email:'rm2289@njit.edu'},theme:'amber',units:'F',speed:'mph',refresh:'1m',
+  push:true,sound:true,quiet:false,esiMin:80,
+  rules:{HOU:true,NYC:true,CHI:false,RTM:true,CUS:false,HH:false,LGB:false},toast:null};
+
+const v = n => `var(--${n==='ink'?'ink':n})`;
+const risk = i => i>=85?'down':i>=60?'acc':i>=40?'cold':'up';
+const sgn = s => s[0]==='+'?'up':s[0]==='−'?'down':'ink';
+const temp = f => S.units==='F'? f+'°' : Math.round((f-32)*5/9)+'°';
+const e = (a,x)=>`data-a="${a}"${x!==undefined?` data-x="${x}"`:''}`;
+
+/* ---------- shared chrome ---------- */
+function ticker(){
+  const q=[['NG','3.42','+2.1%'],['CL','78.64','−0.4%'],['ZW','6.12','+1.3%'],['FBX','2,184','+3.8%']];
+  const one=q.map(t=>`<div class="i"><b style="color:var(--acc)">${t[0]}</b><span>${t[1]}</span><span style="color:${v(sgn(t[2])==='up'?'up':'down')}">${t[2][0]==='+'?'▲ ':'▼ '}${t[2]}</span></div>`).join('');
+  return `<div class="ticker"><div class="t">${one.repeat(4)}</div></div>`;
+}
+function chrome(content,{search=true}={}){
+  const tabs=[['home','☁','HOME'],['map','◉','MAP'],['cities','★','CITIES'],['alerts','⚡','ALERTS'],['settings','⚙','SETTINGS']];
+  return `<div class="status"><span>9:41</span><div class="notch"></div><span class="r">5G ▮▮▮</span></div>
+  ${search?`<div style="padding:2px 14px 8px;flex:none"><div class="cmd"><span class="p">&gt;</span><input id="q" placeholder="City or hub · HOU NYC RTM CHI" autocomplete="off"><span class="live"><i></i>LIVE</span></div></div>`:''}
+  ${ticker()}<div id="results"></div>
+  <div class="body" id="body">${content}</div>
+  <div class="tabbar">${tabs.map(t=>`<button class="${S.tab===t[0]?'on':''}" ${e('tab',t[0])}><span class="ic">${t[1]}</span><span class="tl">${t[2]}</span></button>`).join('')}</div>
+  <div class="home-ind"></div>${S.toast?pushBanner():''}`;
+}
+function pushBanner(){
+  const c=C[S.toast];
+  return `<div class="push" ${e('dismiss')}><div class="ico">⚡</div><div style="min-width:0"><div class="row"><b style="font:600 13px 'IBM Plex Sans'">TerminalCast</b><span class="sub">now</span></div>
+  <div style="font:600 12px 'IBM Plex Mono';color:var(--acc);margin-top:2px">${S.toast} · ${c.cond} ${c.until}</div>
+  <div style="font:400 12px/1.4 'IBM Plex Sans';color:#C4C8D0;margin-top:2px">${c.note.replace('Mkt link: ','')} ESI ${c.idx}.</div></div></div>`;
+}
+
+/* ---------- screens ---------- */
+function authScreen(mode){
+  const su=mode==='signup';
+  return `<div class="status"><span>9:41</span><div class="notch"></div><span class="r">5G ▮▮▮</span></div>
+  <div class="body"><div style="padding:30px 22px;display:flex;flex-direction:column;gap:16px;min-height:100%">
+    <div style="margin-top:24px"><div class="mono" style="font-size:34px;font-weight:600;letter-spacing:-.02em"><span style="color:var(--acc)">&gt;</span> TerminalCast</div>
+    <div style="font:400 14px/1.4 'IBM Plex Sans';color:var(--body);margin-top:8px">Weather that moves markets. Sign in to sync your cities and alerts.</div></div>
+    <div class="live" style="margin-top:4px"><i></i>MARKETS LIVE · NG 3.42 ▲2.1%</div>
+    <div class="err" id="err"></div>
+    ${su?`<div class="field"><label>USERNAME</label><input id="f-user" placeholder="trader01" autocapitalize="off"></div>`:''}
+    <div class="field"><label>EMAIL</label><input id="f-email" type="email" placeholder="you@school.edu" autocapitalize="off"></div>
+    <div class="field"><label>PASSWORD</label><input id="f-pass" type="password" placeholder="••••••••"></div>
+    ${su?`<div class="field"><label>CONFIRM PASSWORD</label><input id="f-pass2" type="password" placeholder="••••••••"></div>`:''}
+    <button class="btn pri" ${e(su?'doSignup':'doLogin')}>${su?'Create account':'Log in'}</button>
+    <button class="btn" ${e('goto',su?'login':'signup')}>${su?'I already have an account':'Sign up'}</button>
+    <div class="sub" style="text-align:center;margin-top:auto;padding-top:16px">Secured by Back4App · Illustrative data. Not investment advice.</div>
+  </div></div><div class="home-ind"></div>`;
+}
+
+function home(){
+  const c=C[S.city], ic=risk(c.idx);
+  const chips=S.saved.map(k=>`<button class="chip ${k===S.city?'on':''}" ${e('city',k)}>${k}</button>`).join('')+`<button class="chip" ${e('tab','cities')} aria-label="Add city">＋</button>`;
+  const arc=(c.idx/100*220).toFixed(0);
+  const hrs=['NOW','10A','11A','12P','1P','2P','3P','4P','5P','6P','7P','8P'];
+  const p=parseInt(c.precip)||0;
+  const hourly=hrs.map((t,i)=>`<div style="flex:none;width:48px;text-align:center;font:500 12px 'IBM Plex Mono'"><div style="color:var(--muted);font-size:10px">${t}</div><div style="margin:8px 0 4px">${temp(c.temp+Math.round(Math.sin((i-6)/24*6.283)*5+5))}</div><div style="color:var(--cold);font-size:10px">${Math.max(0,p-8+((i*7)%16))}%</div></div>`).join('');
+  const hasAlert=!c.until.startsWith('NO');
+  return `<div class="stack">
+  <div style="display:flex;gap:6px;overflow:auto">${chips}</div>
+  <div class="card"><div class="row" style="align-items:flex-start"><div><div class="sub" style="font-size:9px;letter-spacing:.08em">${c.hub}</div><div style="font:600 21px 'IBM Plex Sans';margin-top:2px">${c.name}</div><div style="font:600 11px 'IBM Plex Mono';color:${v(c.cc)};margin-top:4px">${c.cond}</div></div>
+    <div style="text-align:right"><div style="font:500 44px/1 'IBM Plex Mono'">${temp(c.temp)}</div><div class="sub" style="margin-top:4px">FEELS ${temp(c.feels)}</div></div></div>
+    <div class="grid3" style="margin-top:14px"><div class="cell"><div class="k">WIND</div><div class="v">${S.speed==='mph'?c.wind:c.wind.replace(/(\d+) mph/,(m,n)=>Math.round(n*1.609)+' kph')}</div></div><div class="cell"><div class="k">BARO</div><div class="v">${c.baro}</div></div><div class="cell"><div class="k">PRECIP</div><div class="v">${c.precip}</div></div></div></div>
+  ${hasAlert?`<div style="display:flex;gap:10px;align-items:center;padding:10px 12px;background:var(--acc-soft);border:1px solid var(--acc);border-radius:12px"><b class="mono" style="color:var(--acc)">!</b><div style="flex:1;min-width:0"><div style="font:600 12px 'IBM Plex Mono';color:var(--acc)">${c.cond} · ${c.until}</div><div style="font:400 12px 'IBM Plex Sans';color:var(--body);margin-top:2px">${c.note}</div></div>
+    <button class="btn small out" style="height:36px;padding:0 10px" ${e('alertcity',S.city)}>${S.rules[S.city]?'🔔':'🔕'}</button></div>`:''}
+  <div class="card"><div class="row" style="margin-bottom:10px"><span class="lbl">MARKET MOVERS</span><span class="sub">WEATHER-LINKED</span></div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">${c.mv.map(m=>`<div style="background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px"><div class="sub" style="font-size:9px">${m[0]}</div><div style="font:600 15px 'IBM Plex Mono';color:${v(sgn(m[1]))};margin-top:4px">${m[1]}</div></div>`).join('')}</div></div>
+  <div class="card"><div class="row" style="margin-bottom:10px"><span class="lbl">HOURLY</span><span class="sub">NEXT 12H</span></div><div style="display:flex;gap:2px;overflow:auto">${hourly}</div></div>
+  <div class="card"><div class="row"><span class="lbl">ECONOMIC SENSITIVITY INDEX</span><span class="sub">24H</span></div>
+    <div style="position:relative;width:220px;margin:8px auto 0"><svg width="220" height="128" viewBox="0 0 160 92"><path d="M 10 80 A 70 70 0 0 1 150 80" fill="none" stroke="var(--line)" stroke-width="10"/><path d="M 10 80 A 70 70 0 0 1 150 80" fill="none" stroke="${v(ic)}" stroke-width="10" stroke-dasharray="${arc} 300"/></svg>
+    <div style="position:absolute;left:0;right:0;bottom:6px;text-align:center"><div style="font:600 34px/1 'IBM Plex Mono';color:${v(ic)}">${c.idx}</div><div class="sub" style="margin-top:4px">${c.il}</div></div></div>
+    <div style="display:flex;flex-direction:column;gap:12px;margin-top:14px">${c.sens.map(s=>`<div><div class="row" style="font:500 13px 'IBM Plex Sans'"><span>${s[0]}</span><span style="font:600 12px 'IBM Plex Mono';color:${v(risk(s[1]))}">${s[1]}</span></div><div style="height:4px;background:var(--line);border-radius:2px;margin:6px 0 5px"><div style="height:4px;width:${s[1]}%;background:${v(risk(s[1]))};border-radius:2px"></div></div><div class="sub" style="font-weight:400;font-size:11px">${s[2]}</div></div>`).join('')}</div></div>
+  <div class="card"><div class="row" style="margin-bottom:6px"><span class="lbl">5-DAY FORECAST</span><span class="sub">HI / LO °${S.units}</span></div>
+    ${c.fc.map(d=>`<div style="display:grid;grid-template-columns:44px 1fr 36px 36px;gap:8px;align-items:center;height:34px;border-top:1px solid var(--line2);font:500 12px 'IBM Plex Mono'"><span class="sub" style="font-size:11px">${d[0]}</span><span style="color:${v(d[4])};font-size:10px">${d[3]}</span><span style="color:var(--muted);text-align:right">${temp(d[2])}</span><span style="text-align:right">${temp(d[1])}</span></div>`).join('')}</div>
+  </div>`;
+}
+
+function tile(id){
+  const g=GRID[id], ch=CHG[id]||0, f=FRZ[id]||0; let bg='var(--raised)', fg='var(--muted)', bd=S.region===id?'var(--acc)':'var(--line)';
+  if(S.layer==='futures'){const a=Math.min(Math.abs(ch)/7,1)*.55+.08;bg=ch>.2?`rgba(0,255,102,${a})`:ch<-.2?`rgba(255,59,78,${a})`:bg;fg=ch?'var(--ink)':fg;}
+  else if(S.layer==='freeze'){bg=f?`rgba(34,211,238,${.15+f*.2})`:bg;fg=f?'var(--ink)':fg;}
+  return `<div ${e('region',id)} style="position:absolute;left:${g[0]*32}px;top:${g[1]*32}px;width:30px;height:30px;background:${bg};border:1px solid ${bd};color:${fg};border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;font:500 9px 'IBM Plex Mono'">${id}</div>`;
+}
+const ctr = st => [GRID[st][0]*32+15, GRID[st][1]*32+15];
+function mapScreen(){
+  const L=[['futures','FUTURES OVERLAY'],['pipeline','PIPELINE FLOW'],['ports','PORT CORRIDORS'],['freeze','CROP FREEZE']];
+  const title={futures:'FUTURES Δ%',pipeline:'ENERGY FLOW',ports:'SHIPPING',freeze:'FREEZE RISK'}[S.layer];
+  const legend={futures:'Green = bullish impact · Red = bearish · Tap a state',pipeline:'Dashed = gas · Solid = crude · Pins = hubs',ports:'Cyan routes = freight corridors · Pins = ports',freeze:'Cyan intensity = hard-freeze risk to winter wheat'}[S.layer];
+  const keys={futures:['cush','hh','hou','chi','z6'],pipeline:['cush','hh','hou','chi','z6'],ports:['lgb','hou','sav','z6','chi'],freeze:['chi','cush']}[S.layer];
+  const pl=S.layer==='pipeline'?PIPES:S.layer==='ports'?PORTS:[];
+  const lines=pl.map((p,i)=>{const a=ctr(NODES[p[0]][0]),b=ctr(NODES[p[1]][0]),gas=S.layer==='pipeline'&&i%2===0;return `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="${S.layer==='ports'?'var(--cold)':gas?'var(--acc)':'var(--orange)'}" stroke-width="2" stroke-dasharray="${gas||S.layer==='ports'?'5 4':'0'}"/>`}).join('');
+  const pins=keys.map(k=>{const n=NODES[k],p=ctr(n[0]),col=risk(n[2]?C[n[2]].idx:40);return `<div ${e('pin',k)} style="position:absolute;left:${p[0]}px;top:${p[1]}px;transform:translate(-50%,-50%);cursor:pointer;z-index:2;display:flex;flex-direction:column;align-items:center;gap:1px"><span style="width:14px;height:14px;border-radius:50%;background:${v(col)};border:2px solid var(--bg);box-shadow:0 0 0 1px ${v(col)},0 0 10px ${v(col)}"></span><span style="font:600 8px 'IBM Plex Mono';background:color-mix(in srgb,var(--bg) 90%,transparent);padding:0 3px;border-radius:2px;white-space:nowrap">${n[1]}</span></div>`}).join('');
+  const R=REGION[S.region]; const none=['No acute weather-driven exposure. Local benchmarks trading in range.','up'];
+  const code=R&&R[3], saved=code&&S.saved.includes(code);
+  const panel=S.region?`<div style="background:var(--card);border:1px solid var(--strong);border-top:2px solid ${v(R?R[2]:'muted')};border-radius:12px;overflow:hidden">
+    <div class="row" style="align-items:flex-start;padding:12px 14px 6px"><div><div class="sub" style="font-size:9px;letter-spacing:.08em">REGION EXPOSURE</div><div style="font:600 16px 'IBM Plex Sans';margin-top:3px">${R?R[0]:S.region}</div></div><button class="x" style="width:36px;height:36px;border:1px solid var(--strong);border-radius:8px;font-size:14px" ${e('closeregion')}>×</button></div>
+    <div style="padding:0 14px 10px;font:400 13px/1.5 'IBM Plex Sans';color:var(--body)">${R?R[1]:none[0]}</div>
+    ${R?`<div style="display:grid;grid-template-columns:1fr auto;gap:6px 10px;padding:10px 14px;border-top:1px solid var(--line);font:500 11px 'IBM Plex Mono'">${R[4].map(r=>`<span style="color:var(--muted)">${r[0]}</span><span style="color:${v(r[2])};text-align:right">${r[1]}</span>`).join('')}</div>`:''}
+    <div style="display:flex;gap:8px;padding:10px 14px 14px;border-top:1px solid var(--line)"><button class="btn small" style="flex:1" ${e('opencity',code||'')}>OPEN CITY</button><button class="btn small out" style="flex:1" ${e('savehub',code||'')}>${!code?'NO HUB':saved?'★ SAVED':'☆ SAVE HUB'}</button></div></div>`:'';
+  return `<div class="stack" style="gap:12px">
+   <div class="row"><span class="sub" style="letter-spacing:.1em;font-weight:600">US WEATHER × MACRO</span><span class="mono" style="font-weight:600;font-size:12px;color:var(--acc)">${title}</span></div>
+   <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px">${L.map(l=>`<button class="chip ${S.layer===l[0]?'on':''}" style="font-size:11px" ${e('layer',l[0])}>[${l[1]}]</button>`).join('')}</div>
+   <div style="position:relative;width:362px;height:262px;margin:0 auto;background:var(--bg);border:1px solid var(--line);border-radius:12px;overflow:hidden"><div style="position:absolute;left:4px;top:4px;width:352px;height:256px">${Object.keys(GRID).map(tile).join('')}<svg width="352" height="256" style="position:absolute;left:0;top:0;pointer-events:none">${lines}</svg>${pins}</div></div>
+   <div class="sub" style="text-align:center;font-weight:400">${legend}</div>
+   <button class="btn pri" style="display:flex;align-items:center;justify-content:center;gap:8px;height:52px" ${e('arb')}>⚡ View Live Arbitrage Opportunities<span class="mono" style="font-size:11px;background:var(--bg);color:var(--acc);padding:2px 7px;border-radius:6px">4</span></button>
+   ${panel}</div>`;
+}
+
+function arbSheet(){
+  return `<div class="sheet-scrim" ${e('closearb')}><div class="sheet" ${e('stop')}>
+   <div style="width:40px;height:4px;border-radius:2px;background:var(--strong);margin:8px auto 0"></div>
+   <div class="row" style="padding:14px 18px 10px"><div><div class="lbl">⚡ ARBITRAGE RADAR</div><div style="font:600 18px 'IBM Plex Sans';margin-top:3px">Weather-driven spreads</div></div><button class="x" style="border:1px solid var(--strong);border-radius:10px;font-size:16px" ${e('closearb')}>×</button></div>
+   <div style="margin:0 14px;padding:14px;background:var(--raised);border:1px solid var(--line);border-radius:12px"><div class="sub">TOP SPREAD · HENRY HUB vs TRANSCO Z6</div><div style="font:600 46px/1 'IBM Plex Mono';color:var(--up);margin:6px 0 8px">$1.40</div>
+   <div style="font:400 13px/1.5 'IBM Plex Sans';color:var(--body)">Freezing temperatures in NY against mild conditions in TX created a $1.40 Henry Hub vs Transco Z6 natural gas price spread. Pipeline at 98% utilization caps arbitrage flow.</div></div>
+   <div style="padding:10px 14px 0;display:flex;flex-direction:column;gap:8px">${ARBS.map(a=>`<div style="padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--bg)"><div class="row" style="align-items:baseline"><span style="font:600 14px 'IBM Plex Sans'">${a[0]}</span><span style="font:600 15px 'IBM Plex Mono';color:${v(a[5])}">${a[4]}</span></div><div style="font:400 12px 'IBM Plex Sans';color:var(--muted);margin:3px 0 8px">${a[1]}</div><div class="row" style="font:500 11px 'IBM Plex Mono'"><span>${a[2]} → ${a[3]}</span><span style="color:var(--acc)">CONF ${a[6]}</span></div></div>`).join('')}</div>
+   <div class="sub" style="padding:12px 18px 0;font-weight:400">Illustrative data. Not investment advice.</div></div></div>`;
+}
+
+function cities(){
+  const rows=S.saved.map(k=>{const c=C[k],r=risk(c.idx);return `<div class="item ${k===S.city?'on':''}" ${e('open',k)} style="cursor:pointer"><span style="width:10px;height:10px;border-radius:2px;background:${v(r)}"></span>
+   <div style="min-width:0"><div class="nm">${c.name}</div><div class="sub" style="font-weight:400;margin-top:3px">${c.hub}</div></div>
+   <div class="mono" style="text-align:right;font-size:12px;font-weight:500"><div>${temp(c.temp)}</div><div style="color:${v(r)};margin-top:2px">ESI ${c.idx}</div></div>
+   <button class="x" aria-label="Remove ${c.name}" ${e('remove',k)}>×</button></div>`}).join('');
+  return `<div style="padding:14px 0">
+   <div class="row" style="padding:0 16px 8px"><span class="lbl">MY CITIES · SAVED HUBS</span><span class="sub">${S.saved.length} SAVED</span></div>
+   ${S.saved.length?rows:`<div style="padding:40px 24px;text-align:center"><div class="mono" style="font-size:28px;color:var(--muted)">☆</div><div style="font:600 15px 'IBM Plex Sans';margin-top:8px">No saved cities</div><div style="font:400 12px 'IBM Plex Sans';color:var(--muted);margin-top:4px">Search the command bar above or add one below.</div></div>`}
+   <div class="legend"><span><i style="background:var(--down)"></i>SHOCK</span><span><i style="background:var(--acc)"></i>ELEVATED</span><span><i style="background:var(--cold)"></i>COLD</span><span><i style="background:var(--up)"></i>CLEAR</span></div>
+   <div style="padding:0 16px"><div class="lbl" style="margin-bottom:8px">ADD A CITY</div>
+   <div style="display:flex;flex-direction:column;gap:6px">${Object.keys(C).filter(k=>!S.saved.includes(k)).map(k=>`<div class="row card" style="padding:8px 8px 8px 14px;border-radius:10px"><div><div style="font:500 13px 'IBM Plex Sans'"><span class="mono" style="color:var(--acc)">${k}</span> &nbsp;${C[k].name}</div><div class="sub" style="font-weight:400;margin-top:2px">${C[k].hub}</div></div><button class="btn small out" ${e('add',k)}>＋ ADD</button></div>`).join('')||`<div class="sub" style="font-weight:400">All available cities are saved.</div>`}</div></div></div>`;
+}
+
+function alerts(){
+  const sev=[['esi','ESI ≥ '+S.esiMin,'Push when a saved city crosses the index'],['sev','Severe weather','Watches, warnings, advisories']];
+  const logs=[['HOU','Heat Advisory until 8PM','12m ago'],['NYC','Hard Freeze · Z6 basis +$1.40','2h ago'],['RTM','Gale Warning until 3PM','5h ago']];
+  return `<div class="stack">
+   <div class="group"><div class="set"><div><div class="n">Push alerts</div><div class="d">Sent from the backend for saved cities</div></div><button class="sw ${S.push?'on':''}" aria-label="Push alerts" ${e('toggle','push')}></button></div></div>
+   <div class="group"><div class="gh"><span class="lbl">ESI THRESHOLD</span></div><div style="padding:0 14px 14px"><div class="seg">${[70,80,90].map(n=>`<button class="${S.esiMin===n?'on':''}" ${e('esi',n)}>≥ ${n}</button>`).join('')}</div>
+   <div class="sub" style="font-weight:400;margin-top:8px">${S.esiMin>=90?'Extreme only':S.esiMin>=80?'High and extreme':'Elevated and above'}</div></div></div>
+   <div class="group"><div class="gh row"><span class="lbl">ALERT RULES · BY CITY</span><span class="sub">${S.saved.filter(k=>S.rules[k]).length} ON</span></div>
+    ${S.saved.length?S.saved.map(k=>`<div class="set"><div><div class="n"><span class="mono" style="color:var(--acc)">${k}</span> &nbsp;${C[k].name}</div><div class="d">${C[k].cond} · ESI ${C[k].idx}</div></div><button class="sw ${S.rules[k]?'on':''}" aria-label="Alerts for ${k}" ${e('rule',k)}></button></div>`).join(''):`<div class="set"><div class="d">Save a city to create alert rules.</div></div>`}</div>
+   <button class="btn pri" ${e('testpush')} ${S.push&&S.saved.some(k=>S.rules[k])?'':'disabled style="opacity:.4"'}>⚡ Send test push</button>
+   <div class="group"><div class="gh"><span class="lbl">RECENT PUSHES</span></div>${logs.map(l=>`<div class="set"><div><div class="n">${l[0]} · ${l[1]}</div></div><span class="sub">${l[2]}</span></div>`).join('')}</div></div>`;
+}
+
+function settings(){
+  const seg=(key,opts)=>`<div class="seg" style="width:150px">${opts.map(o=>`<button class="${S[key]===o?'on':''}" ${e('set',key+':'+o)}>${o}</button>`).join('')}</div>`;
+  const themes=[['amber','AMBER','#0D0E12','#FFB000'],['arctic','ARCTIC','#0A1016','#22D3EE'],['violet','VIOLET','#0E0C14','#A78BFA']];
+  return `<div class="stack">
+   <div class="card row"><div style="display:flex;gap:12px;align-items:center"><div style="width:44px;height:44px;border-radius:12px;background:var(--acc-soft);border:1px solid var(--acc);color:var(--acc);display:flex;align-items:center;justify-content:center;font:600 18px 'IBM Plex Mono'">${S.user.name[0].toUpperCase()}</div><div><div style="font:600 15px 'IBM Plex Sans'">${S.user.name}</div><div class="sub" style="font-weight:400;margin-top:2px">${S.user.email}</div></div></div><span class="sub" style="color:var(--up)">● SYNCED</span></div>
+   <div class="group"><div class="gh"><span class="lbl">APPEARANCE</span></div><div style="display:flex;gap:8px;padding:0 14px 14px">${themes.map(t=>`<button class="theme ${S.theme===t[0]?'on':''}" ${e('theme',t[0])}><div class="sq"><i style="background:${t[2]}"></i><i style="background:${t[3]}"></i></div><span style="color:${S.theme===t[0]?'var(--acc)':'var(--muted)'}">${t[1]}</span></button>`).join('')}</div></div>
+   <div class="group"><div class="gh"><span class="lbl">UNITS &amp; DATA</span></div>
+    <div class="set"><div class="n">Temperature</div>${seg('units',['F','C'])}</div>
+    <div class="set"><div class="n">Wind speed</div>${seg('speed',['mph','kph'])}</div>
+    <div class="set"><div><div class="n">Refresh</div><div class="d">Quotes and conditions</div></div>${seg('refresh',['1m','5m','15m'])}</div></div>
+   <div class="group"><div class="gh"><span class="lbl">NOTIFICATIONS</span></div>
+    <div class="set"><div class="n">Push alerts</div><button class="sw ${S.push?'on':''}" aria-label="Push alerts" ${e('toggle','push')}></button></div>
+    <div class="set"><div class="n">Sound</div><button class="sw ${S.sound?'on':''}" aria-label="Sound" ${e('toggle','sound')}></button></div>
+    <div class="set"><div><div class="n">Quiet hours</div><div class="d">10 PM – 6 AM</div></div><button class="sw ${S.quiet?'on':''}" aria-label="Quiet hours" ${e('toggle','quiet')}></button></div></div>
+   <div class="group"><div class="gh"><span class="lbl">ABOUT</span></div><div class="set"><div class="n">Version</div><span class="sub">1.0.0 (midterm)</span></div><div class="set"><div class="d" style="margin:0">Illustrative data. Not investment advice.</div></div></div>
+   <button class="btn" style="color:var(--down);border-color:var(--down)" ${e('logout')}>Log out</button></div>`;
+}
+
+/* ---------- render ---------- */
+function render(){
+  const ph=document.getElementById('phone'); ph.dataset.theme=S.theme;
+  const scr=document.getElementById('body'), keep=scr?scr.scrollTop:0;
+  if(S.screen==='login'||S.screen==='signup') ph.innerHTML=authScreen(S.screen);
+  else {
+    const map={home:home,map:mapScreen,cities:cities,alerts:alerts,settings:settings};
+    ph.innerHTML=chrome(map[S.tab]())+(S.arb?arbSheet():'');
+    const b=document.getElementById('body'); if(b&&S.keepScroll) b.scrollTop=keep;
+  }
+  S.keepScroll=false;
+  document.querySelectorAll('#flow button').forEach(b=>b.classList.toggle('on',b.dataset.go===(S.arb?'radar':S.screen==='app'?S.tab:S.screen)));
+  const q=document.getElementById('q'); if(q) q.addEventListener('input',search);
+}
+function search(ev){
+  const t=ev.target.value.trim().toLowerCase(), out=document.getElementById('results');
+  const hits=t?Object.entries(C).filter(([k,c])=>(k+c.name+c.hub).toLowerCase().includes(t)).slice(0,4):[];
+  out.innerHTML=hits.length?`<div style="background:var(--card);border-bottom:1px solid var(--strong)">${hits.map(([k,c])=>`<div ${e('open',k)} style="display:flex;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line2);font:500 13px 'IBM Plex Mono';cursor:pointer"><span><span style="color:var(--acc)">${k}</span> &nbsp;${c.name}</span><span style="color:var(--muted)">${S.saved.includes(k)?'★':''}</span></div>`).join('')}</div>`:(t?`<div class="sub" style="padding:12px 16px;background:var(--card)">No match for “${ev.target.value}”</div>`:'');
+}
+function go(name){
+  if(name==='login'||name==='signup'){S.screen=name;S.arb=false;}
+  else {S.screen='app';S.arb=name==='radar';S.tab=name==='radar'?'map':name;}
+  S.toast=null; render();
+}
+function fail(msg){const el=document.getElementById('err'); el.textContent=msg; el.classList.add('show');}
+const val=id=>(document.getElementById(id)||{}).value||'';
+
+document.addEventListener('click',ev=>{
+  const t=ev.target.closest('[data-a]'); if(!t) return;
+  const a=t.dataset.a, x=t.dataset.x;
+  if(a==='stop') return;
+  S.keepScroll=true;
+  switch(a){
+    case 'goto': go(x); return;
+    case 'doLogin': if(!val('f-email')||!val('f-pass')) return fail('Enter your email and password.');
+      if(!/^\S+@\S+\.\S+$/.test(val('f-email'))) return fail('That email address looks invalid.');
+      S.user.email=val('f-email'); S.user.name=val('f-email').split('@')[0]; go('home'); return;
+    case 'doSignup': if(!val('f-user')||!val('f-email')||!val('f-pass')) return fail('All fields are required.');
+      if(!/^\S+@\S+\.\S+$/.test(val('f-email'))) return fail('That email address looks invalid.');
+      if(val('f-pass').length<8) return fail('Password must be at least 8 characters.');
+      if(val('f-pass')!==val('f-pass2')) return fail('Passwords do not match.');
+      S.user={name:val('f-user'),email:val('f-email')}; go('home'); return;
+    case 'logout': go('login'); return;
+    case 'tab': S.tab=x; S.keepScroll=false; break;
+    case 'city': S.city=x; break;
+    case 'open': S.city=x; S.tab='home'; S.keepScroll=false; break;
+    case 'layer': S.layer=x; break;
+    case 'region': S.region=x; break;
+    case 'pin': {const n=NODES[x]; if(n[2]) S.city=n[2]; S.region=n[0]; break;}
+    case 'closeregion': S.region=null; break;
+    case 'opencity': if(x) S.city=x; S.tab='home'; S.keepScroll=false; break;
+    case 'savehub': if(x) S.saved=S.saved.includes(x)?S.saved.filter(k=>k!==x):[...S.saved,x]; break;
+    case 'add': S.saved.push(x); S.rules[x]=true; break;
+    case 'remove': S.saved=S.saved.filter(k=>k!==x); if(S.city===x&&S.saved.length) S.city=S.saved[0]; break;
+    case 'arb': S.arb=true; break;
+    case 'closearb': S.arb=false; break;
+    case 'toggle': S[x]=!S[x]; break;
+    case 'rule': S.rules[x]=!S.rules[x]; break;
+    case 'alertcity': S.rules[x]=!S.rules[x]; break;
+    case 'esi': S.esiMin=+x; break;
+    case 'set': {const [k,val2]=x.split(':'); S[k]=val2; break;}
+    case 'theme': S.theme=x; break;
+    case 'testpush': {const k=S.saved.find(k=>S.rules[k]); S.toast=k; setTimeout(()=>{S.toast=null;S.keepScroll=true;render();},4500); break;}
+    case 'dismiss': S.toast=null; break;
+  }
+  render();
+});
+document.addEventListener('keydown',ev=>{if(ev.key==='Escape'&&S.arb){S.arb=false;render();}});
+
+/* ---------- side panels ---------- */
+const FLOW=[['login','1 · Log in'],['signup','2 · Sign up'],['home','3 · Home (city weather + ESI)'],['map','4 · Map (4 layers)'],['radar','5 · Arbitrage Radar sheet'],['cities','6 · My Cities (add / save)'],['alerts','7 · Alerts (push rules)'],['settings','8 · Settings + themes']];
+document.getElementById('flow').innerHTML=`<div class="brand">TERMINALCAST · SCREENS</div>`+FLOW.map(f=>`<button data-go="${f[0]}">${f[1]}</button>`).join('')+`<h3>NOTE</h3><div style="font:400 11px/1.5 'IBM Plex Sans';color:#7C8494">Interactive mock. Try bad credentials, the add/remove city flow, the theme picker, and “Send test push” on Alerts.</div>`;
+document.getElementById('flow').addEventListener('click',ev=>{const b=ev.target.closest('[data-go]'); if(b) go(b.dataset.go);});
+const SW=[['#0D0E12','Canvas'],['#14161C','Card'],['#262A33','Hairline'],['#E6E8EC','Ink'],['#FFB000','Accent · alert, CTA'],['#00FF66','Gain, bullish'],['#FF3B4E','Shock, loss'],['#22D3EE','Freeze, cold']];
+document.getElementById('ds').innerHTML=`<div class="lbl" style="font:600 11px 'IBM Plex Mono';letter-spacing:.1em;color:#FFB000">TERMINALCAST · DESIGN SYSTEM</div>
+<div style="font:600 26px/1.15 'IBM Plex Sans';margin:6px 0 12px">Institutional density, thumb-sized targets.</div>
+<h3>COLOR · SEMANTICS</h3><div class="sw8">${SW.map(s=>`<div class="sc"><div style="background:${s[0]}"></div><div>${s[0]}<small>${s[1]}</small></div></div>`).join('')}</div>
+<h3>THEMES (SETTINGS → APPEARANCE)</h3><p>Three themes swap surfaces and the accent only. Gain, loss and cold keep fixed meaning so risk colors never drift. Arctic swaps cold to amber so it stays distinct from the cyan accent.</p>
+<h3>TYPE</h3><p><b>IBM Plex Sans</b> 500/600 for titles and copy. <b>IBM Plex Mono</b> 400–600 for every number, label and ticker. Section labels: Mono 600 11, caps, +10% tracking.</p>
+<h3>RULES</h3><p>Accent = action, tickers, alerts. One filled accent CTA per screen.</p><p>Surfaces step bg → card → raised with 1px lines. No shadows except the CTA glow.</p><p>Targets ≥ 44pt. Every state has an empty, error or disabled form (bad login, no cities, no alert rules).</p><p>Navigation: 5-tab bar (Home, Map, Cities, Alerts, Settings). Arbitrage is a bottom sheet from the Map CTA.</p>
+<h3>CHANGES FROM HANDOFF</h3><p>Added Log in, Sign up, Alerts and Settings. Watch became Cities with add and remove. Radar moved from a tab to the Map CTA to free a slot for Alerts.</p>`;
+render();
+</script>
+</body>
+</html>
