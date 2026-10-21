@@ -26,7 +26,7 @@ export async function savePrefs(data) {
   console.log('[B4A] savePrefs ok');
 }
 
-export async function registerDevice({ token, cities, pushEnabled, esiMin }) {
+export async function registerDevice({ token, places, pushEnabled, esiMin }) {
   if (!configured || !token) return;
   const user = await Parse.User.currentAsync();
   if (!user) return;
@@ -35,16 +35,24 @@ export async function registerDevice({ token, cities, pushEnabled, esiMin }) {
   row.set('user', user);
   row.setACL(privateAcl(user));
   row.set('platform', Platform.OS);
-  row.set('cities', cities);
+  row.set('places', places);                      // [{code,name,lat,lon}] with alerts on; Cloud Code polls these
+  row.set('cities', places.map((p) => p.code));   // codes, for simple queries
   row.set('pushEnabled', pushEnabled);
   row.set('esiMin', esiMin);
   await row.save();
-  console.log('[B4A] registerDevice ok', cities.join(','), 'push', pushEnabled);
+  console.log('[B4A] registerDevice ok', places.map((p) => p.code).join(','), 'push', pushEnabled);
 }
 
-// Asks Cloud Code to push a test alert for one city to the caller's own devices.
-export async function sendTestAlert(city) {
-  const res = await Parse.Cloud.run('sendCityAlert', { city, test: true });
+// Cloud Code builds a push from LIVE weather for this place and sends it to the caller's own devices.
+export async function sendTestAlert(place) {
+  const res = await Parse.Cloud.run('sendCityAlert', { place });
   console.log('[B4A] sendCityAlert', JSON.stringify(res));
+  return res;
+}
+
+// Cloud Code polls NWS + Open-Meteo for these places and pushes anything new to the caller's devices.
+export async function checkMyAlerts(places) {
+  const res = await Parse.Cloud.run('checkWeatherAlerts', { places });
+  console.log('[B4A] checkWeatherAlerts', JSON.stringify(res));
   return res;
 }

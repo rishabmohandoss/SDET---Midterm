@@ -1,21 +1,20 @@
 import React, { useState } from 'react';
 import { ScrollView } from 'react-native';
-import { CITIES } from '../data';
 import { useApp } from '../store';
 import { Btn, Group, Seg, SetRow, Sub, Switch, Txt } from '../ui';
 
-const LOGS = [['HOU', 'Heat Advisory until 8PM', '12m ago'], ['NYC', 'Hard Freeze · Z6 basis +$1.40', '2h ago'], ['RTM', 'Gale Warning until 3PM', '5h ago']];
-
 export default function AlertsScreen() {
-  const { saved, rules, toggleRule, push, set, esiMin, sendTest, pushStatus } = useApp();
+  const { saved, rules, toggleRule, push, set, esiMin, sendTest, checkLive, pushStatus, meta, shortOf, getCity } = useApp();
   const [msg, setMsg] = useState('');
+  const [busy, setBusy] = useState(false);
   const active = saved.filter((k) => rules[k]);
-  const canTest = push && active.length > 0;
+  const can = push && active.length > 0 && !busy;
+  const run = (fn) => async () => { setBusy(true); setMsg('Working…'); try { setMsg(await fn()); } catch (e) { setMsg(`Error: ${e?.message || e}`); } finally { setBusy(false); } };
 
   return (
     <ScrollView contentContainerStyle={{ padding: 14, gap: 12 }}>
       <Group>
-        <SetRow first title="Push alerts" desc="Sent from the backend for saved cities">
+        <SetRow first title="Push alerts" desc="Sent from Back4App for saved cities">
           <Switch on={push} label="Push alerts" onPress={() => set({ push: !push })} />
         </SetRow>
       </Group>
@@ -27,18 +26,24 @@ export default function AlertsScreen() {
       </Group>
       <Group title="ALERT RULES · BY CITY" right={<Sub>{active.length} ON</Sub>}>
         {saved.length === 0 && <SetRow first title="Save a city to create alert rules." />}
-        {saved.map((k, i) => (
-          <SetRow key={k} first={i === 0} title={`${k}  ${CITIES[k].name}`} desc={`${CITIES[k].cond} · ESI ${CITIES[k].idx}`}>
-            <Switch on={!!rules[k]} label={`Alerts for ${k}`} onPress={() => toggleRule(k)} />
-          </SetRow>
-        ))}
+        {saved.map((k, i) => {
+          const m = meta(k), c = getCity(k);
+          return m ? (
+            <SetRow key={k} first={i === 0} title={`${shortOf(k)}  ${m.name}`} desc={c ? `${c.cond} · ESI ${c.idx}` : 'Loading live data…'}>
+              <Switch on={!!rules[k]} label={`Alerts for ${shortOf(k)}`} onPress={() => toggleRule(k)} />
+            </SetRow>
+          ) : null;
+        })}
       </Group>
-      <Btn kind="pri" title="⚡ Send test push" disabled={!canTest} onPress={async () => { setMsg('Sending…'); setMsg(await sendTest(active[0])); }} />
+      <Btn kind="pri" title="⚡ Send test push" disabled={!can} onPress={run(() => sendTest(active[0]))} />
+      <Btn kind="out" title="Check live alerts now" disabled={!can} onPress={run(checkLive)} />
       <Txt f="mono" size={11} c="muted" style={{ textAlign: 'center' }}>{msg || `Device: ${pushStatus}`}</Txt>
-      <Group title="RECENT PUSHES">
-        {LOGS.map(([k, msg, ago], i) => (
-          <SetRow key={k} first={i === 0} title={`${k} · ${msg}`}><Sub>{ago}</Sub></SetRow>
-        ))}
+      <Group title="LIVE ALERTS · NWS & OPEN-METEO">
+        {saved.map((k, i) => { const c = getCity(k); return (
+          <SetRow key={k} first={i === 0} title={`${shortOf(k)} · ${c ? c.cond : '…'}`} desc={c?.alert ? c.alert.headline : c ? 'No active alerts' : 'Loading'}>
+            <Sub>{c ? c.until : ''}</Sub>
+          </SetRow>
+        ); })}
       </Group>
     </ScrollView>
   );

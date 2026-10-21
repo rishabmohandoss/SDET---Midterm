@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Pressable, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { CITIES } from './data';
+import { PRESETS } from './places';
+import { geocode } from './live';
 import { F } from './theme';
 import { useApp } from './store';
-import { Txt } from './ui';
+import { Row, Txt } from './ui';
 import HomeScreen from './screens/HomeScreen';
 import MapScreen from './screens/MapScreen';
 import CitiesScreen from './screens/CitiesScreen';
@@ -13,10 +14,11 @@ import SettingsScreen from './screens/SettingsScreen';
 import ArbSheet from './screens/ArbSheet';
 
 const TABS = [['home', '☁', 'HOME'], ['map', '◉', 'MAP'], ['cities', '★', 'CITIES'], ['alerts', '⚡', 'ALERTS'], ['settings', '⚙', 'SETTINGS']];
-const QUOTES = [['NG', '3.42', '+2.1%'], ['CL', '78.64', '−0.4%'], ['ZW', '6.12', '+1.3%'], ['FBX', '2,184', '+3.8%']];
+const TICK = ['NG', 'CL', 'ZW', 'HO'];
 
 function Ticker() {
-  const { t } = useApp();
+  const { t, quotes } = useApp();
+  const QUOTES = TICK.map((k) => (quotes[k] ? [k, (k === 'ZW' ? quotes[k].price / 100 : quotes[k].price).toFixed(2), `${quotes[k].chg >= 0 ? '+' : '−'}${Math.abs(quotes[k].chg).toFixed(1)}%`] : [k, '…', '+0.0%']));
   const x = useRef(new Animated.Value(0)).current;
   const [w, setW] = useState(0);
   useEffect(() => {
@@ -47,40 +49,27 @@ function Ticker() {
   );
 }
 
-function PushBanner() {
-  const { t, toast, setToast } = useApp();
-  const y = useRef(new Animated.Value(-140)).current;
-  useEffect(() => {
-    if (!toast) return;
-    y.setValue(-140);
-    Animated.timing(y, { toValue: 0, duration: 300, useNativeDriver: true }).start();
-    const id = setTimeout(() => setToast(null), 4500);
-    return () => clearTimeout(id);
-  }, [toast]);
-  if (!toast) return null;
-  const c = CITIES[toast];
-  return (
-    <Animated.View style={{ position: 'absolute', top: 54, left: 10, right: 10, zIndex: 50, transform: [{ translateY: y }] }}>
-      <Pressable onPress={() => setToast(null)} style={{ flexDirection: 'row', gap: 10, padding: 12, borderRadius: 20, backgroundColor: 'rgba(30,32,40,.97)', borderWidth: 1, borderColor: t.strong }}>
-        <View style={{ width: 36, height: 36, borderRadius: 9, backgroundColor: t.acc, alignItems: 'center', justifyContent: 'center' }}><Txt f="monoB" size={15} c={t.bg}>⚡</Txt></View>
-        <View style={{ flex: 1 }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}><Txt f="sansB" size={13}>TerminalCast</Txt><Txt f="monoM" size={10} c="muted">now</Txt></View>
-          <Txt f="monoB" size={12} c="acc" style={{ marginTop: 2 }}>{toast} · {c.cond} {c.until}</Txt>
-          <Txt size={12} c="body" style={{ marginTop: 2 }}>{c.note} ESI {c.idx}.</Txt>
-        </View>
-      </Pressable>
-    </Animated.View>
-  );
-}
-
 export default function Shell() {
-  const { t, set, saved } = useApp();
+  const { t, set, saved, addPlace, addPreset, load, meta, shortOf } = useApp();
   const [tab, setTab] = useState('home');
   const [arb, setArb] = useState(false);
   const [q, setQ] = useState('');
   const goTab = setTab;
 
-  const hits = q.trim() ? Object.entries(CITIES).filter(([k, c]) => (k + c.name + c.hub).toLowerCase().includes(q.trim().toLowerCase())).slice(0, 4) : [];
+  const [geo, setGeo] = useState({ hits: [], busy: false, err: '' });
+  useEffect(() => {
+    const term = q.trim();
+    if (term.length < 2) { setGeo({ hits: [], busy: false, err: '' }); return; }
+    setGeo((g) => ({ ...g, busy: true, err: '' }));
+    const id = setTimeout(async () => {
+      try { setGeo({ hits: await geocode(term), busy: false, err: '' }); }
+      catch (e) { setGeo({ hits: [], busy: false, err: 'Search failed. Check your connection.' }); }
+    }, 350);
+    return () => clearTimeout(id);
+  }, [q]);
+  const presetHits = q.trim() ? Object.entries(PRESETS).filter(([k, c]) => (k + c.name + c.hub).toLowerCase().includes(q.trim().toLowerCase())).slice(0, 3) : [];
+  const pickPreset = (k) => { addPreset(k); load(k); set({ city: k }); setQ(''); setTab('home'); };
+  const pickPlace = (pl) => { const code = addPlace(pl); load(code, { name: pl.name, hub: pl.hub, lat: pl.lat, lon: pl.lon }); setQ(''); setTab('home'); };
 
   const screens = {
     home: <HomeScreen goTab={goTab} />,
@@ -103,12 +92,20 @@ export default function Shell() {
       <Ticker />
       {q.trim() !== '' && (
         <View style={{ backgroundColor: t.card, borderBottomWidth: 1, borderBottomColor: t.strong }}>
-          {hits.length === 0 && <Txt f="monoM" size={12} c="muted" style={{ padding: 14 }}>No match for “{q}”</Txt>}
-          {hits.map(([k, c]) => (
-            <Pressable key={k} onPress={() => { set({ city: k }); setQ(''); setTab('home'); }} style={{ flexDirection: 'row', justifyContent: 'space-between', padding: 14, minHeight: 44, borderBottomWidth: 1, borderBottomColor: t.line2 }}>
-              <Txt f="monoM" size={13}><Txt f="monoM" size={13} c="acc">{k}</Txt>  {c.name}</Txt><Txt f="monoM" size={13} c="muted">{saved.includes(k) ? '★' : ''}</Txt>
+          {presetHits.map(([k, c]) => (
+            <Pressable key={k} onPress={() => pickPreset(k)} style={{ flexDirection: 'row', justifyContent: 'space-between', padding: 14, minHeight: 44, borderBottomWidth: 1, borderBottomColor: t.line2 }}>
+              <Txt f="monoM" size={13}><Txt f="monoM" size={13} c="acc">{k}</Txt>  {c.name}</Txt><Txt f="monoM" size={11} c="muted">{saved.includes(k) ? '★ SAVED' : '＋ ADD'}</Txt>
             </Pressable>
           ))}
+          {geo.hits.map((pl) => (
+            <Pressable key={pl.id} onPress={() => pickPlace(pl)} style={{ padding: 14, minHeight: 44, borderBottomWidth: 1, borderBottomColor: t.line2 }}>
+              <Row><Txt f="monoM" size={13} style={{ flex: 1 }}>{pl.name}</Txt><Txt f="monoM" size={11} c="muted">＋ ADD</Txt></Row>
+              <Txt f="mono" size={10} c="muted" style={{ marginTop: 2 }}>{pl.hub}</Txt>
+            </Pressable>
+          ))}
+          {geo.busy && <Txt f="monoM" size={12} c="muted" style={{ padding: 14 }}>Searching…</Txt>}
+          {geo.err ? <Txt f="monoM" size={12} c="down" style={{ padding: 14 }}>{geo.err}</Txt> : null}
+          {!geo.busy && !geo.err && q.trim().length >= 2 && presetHits.length === 0 && geo.hits.length === 0 && <Txt f="monoM" size={12} c="muted" style={{ padding: 14 }}>No match for “{q}”</Txt>}
         </View>
       )}
       <View style={{ flex: 1 }}>{screens[tab]}</View>
@@ -121,7 +118,6 @@ export default function Shell() {
         ))}
       </View>
       <ArbSheet visible={arb} onClose={() => setArb(false)} />
-      <PushBanner />
     </SafeAreaView>
   );
 }
