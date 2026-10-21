@@ -1,5 +1,9 @@
 // Illustrative mock data. Replace with real feeds / Back4App classes later.
 export const CITIES = {
+  NWK: { name: 'Newark, NJ', hub: 'NY HARBOR · PJM EAST', temp: 31, feels: 22, wind: 15, dir: 'NW', baro: '30.24"', precip: '40% SNOW', cond: 'WINTER WX ADVISORY', cc: 'cold', idx: 74, il: 'HIGH · BULLISH NG / POWER', until: 'UNTIL 7AM', note: 'PJM East load up on cold; Port Newark icing slows drayage.',
+    mv: [['PJM WEST', '+3.1%'], ['TRANSCO Z6', '+6.1%'], ['ULSD NYH', '+1.7%']],
+    fc: [['MON', 33, 21, 'COLD', 'cold'], ['TUE', 29, 18, 'SNOW', 'cold'], ['WED', 34, 22, 'COLD', 'cold'], ['THU', 39, 28, 'CLOUD', 'acc'], ['FRI', 44, 33, 'CLEAR', 'up']],
+    sens: [['Heating demand', 79, 'HDD +28% vs normal'], ['Z6 gas basis', 72, 'Pipeline at 94% utilization'], ['Port Newark drayage', 57, 'Icing slowdowns on I-95 / NJ Tpk'], ['PJM power load', 68, 'Peak +4% vs 5y avg']] },
   HOU: { name: 'Houston, TX', hub: 'GULF COAST · ERCOT', temp: 93, feels: 101, wind: 11, dir: 'SSE', baro: '29.82"', precip: '10%', cond: 'HEAT ADVISORY', cc: 'down', idx: 78, il: 'HIGH · BULLISH POWER', until: 'UNTIL 8PM', note: 'ERCOT load +6% vs 5y avg; power futures bid.',
     mv: [['ERCOT PWR', '+4.2%'], ['HSC NG', '+1.9%'], ['RBOB', '+0.8%']],
     fc: [['MON', 94, 76, 'HOT', 'down'], ['TUE', 95, 77, 'HOT', 'down'], ['WED', 91, 75, 'STORM', 'acc'], ['THU', 87, 73, 'CLEAR', 'up'], ['FRI', 86, 72, 'CLEAR', 'up']],
@@ -44,6 +48,7 @@ export const REGION = {
   OK: ['Oklahoma · Cushing', 'Cushing storage tight; cold snap in the Plains slows trucked barrels.', 'acc', 'CUS', [['WTI CUSHING', '$78.64 −0.4%', 'down'], ['TANK UTIL.', '61%', 'acc'], ['CL M1–M2', '+$0.32', 'up']]],
   IL: ['Illinois · Chicago', 'Sub-freezing snap and ice delay rail and barge grain movements.', 'acc', 'CHI', [['ZW CHICAGO', '$6.12 +1.3%', 'up'], ['RAIL DWELL', '+19h', 'down'], ['BARGE FREIGHT', '$14.20/t', 'acc']]],
   LA: ['Louisiana · Henry Hub', 'Henry Hub long on mild Gulf temps and steady LNG feedgas.', 'up', 'HH', [['HENRY HUB', '$3.42 +2.1%', 'up'], ['LNG FEEDGAS', '14.8 Bcf/d', 'ink'], ['STORM RISK', 'LOW', 'up']]],
+  NJ: ['New Jersey · Newark', 'Cold snap lifts PJM East load and heating demand; Port Newark drayage slowed by icing.', 'cold', 'NWK', [['PJM WEST','$58.20 +3.1%','up'],['TRANSCO Z6','$4.82 +6.1%','up'],['PORT DELAY','1.2 d','acc']]],
   CA: ['California · LA/Long Beach', 'Clear and mild. Port throughput normal; container rates easing.', 'up', 'LGB', [['FBX WEST COAST', '$2,184 +3.8%', 'up'], ['AT ANCHOR', '3 vessels', 'up'], ['PORT DELAY', '0.4 d', 'up']]],
 };
 

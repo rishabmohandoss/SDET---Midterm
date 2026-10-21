@@ -95,7 +95,7 @@ export default function Shell() {
       <View style={{ paddingHorizontal: 14, paddingTop: 4, paddingBottom: 8 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, height: 40, paddingHorizontal: 12, backgroundColor: t.card, borderWidth: 1, borderColor: t.line, borderRadius: 10 }}>
           <Txt f="monoB" size={13} c="acc">&gt;</Txt>
-          <TextInput value={q} onChangeText={setQ} placeholder="City or hub · HOU NYC RTM CHI" placeholderTextColor={t.muted} autoCapitalize="none" autoCorrect={false} accessibilityLabel="Search cities"
+          <TextInput value={q} onChangeText={setQ} placeholder="City or hub · NWK HOU NYC CHI" placeholderTextColor={t.muted} autoCapitalize="none" autoCorrect={false} accessibilityLabel="Search cities"
             style={{ flex: 1, color: t.ink, fontFamily: F.mono, fontSize: 13 }} />
           <Txt f="monoB" size={10} c="up">● LIVE</Txt>
         </View>

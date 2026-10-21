@@ -7,6 +7,7 @@
 const EXPO_PUSH = 'https://exp.host/--/api/v2/push/send';
 
 const ALERTS = {
+  NWK: { cond: 'WINTER WX ADVISORY', until: 'UNTIL 7AM', idx: 74, note: 'PJM East load up on cold; Port Newark icing slows drayage.' },
   HOU: { cond: 'HEAT ADVISORY', until: 'UNTIL 8PM', idx: 78, note: 'ERCOT load +6% vs 5y avg; power futures bid.' },
   NYC: { cond: 'HARD FREEZE', until: 'UNTIL 6AM', idx: 91, note: 'Z6 basis +$1.40 over Henry Hub; heating oil bid.' },
   CHI: { cond: 'ICE STORM WATCH', until: 'UNTIL 10PM', idx: 83, note: 'Rail dwell +19h; wheat logistics risk.' },

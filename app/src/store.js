@@ -7,13 +7,13 @@ import { registerForPush, localAlert } from './push';
 import { CITIES } from './data';
 import { configured } from './parse';
 
-const KEY = 'terminalcast:v1';
+const KEY = 'terminalcast:v2';
 const Ctx = createContext(null);
 export const useApp = () => useContext(Ctx);
 
 const DEFAULTS = {
-  user: null, theme: 'amber', saved: ['HOU', 'NYC', 'CHI', 'RTM'], city: 'HOU',
-  rules: { HOU: true, NYC: true, CHI: false, RTM: true, CUS: false, HH: false, LGB: false },
+  user: null, theme: 'amber', saved: ['NWK', 'HOU', 'NYC', 'CHI', 'RTM'], city: 'NWK',
+  rules: { NWK: true, HOU: true, NYC: true, CHI: false, RTM: true, CUS: false, HH: false, LGB: false },
   units: 'F', speed: 'mph', refresh: '1m', push: true, sound: true, quiet: false, esiMin: 80,
 };
 // Everything except the session user is synced to Back4App (UserPrefs).
