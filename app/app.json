@@ -24,6 +24,12 @@
     "plugins": [
       "expo-font",
       "expo-status-bar"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "4b08916d-f6ff-4185-aefa-3076ba217a41"
+      }
+    },
+    "owner": "rishabmohandoss"
   }
 }
