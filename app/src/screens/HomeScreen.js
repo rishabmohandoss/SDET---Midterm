@@ -117,8 +117,8 @@ export default function HomeScreen({ goTab }) {
 
       <Card>
         <Row style={{ marginBottom: 6 }}><Label>10-DAY FORECAST</Label><Sub>HI / LO</Sub></Row>
-        {c.fc.map(([d, hi, lo, cond, col]) => (
-          <View key={d} style={{ flexDirection: 'row', alignItems: 'center', height: 34, borderTopWidth: 1, borderTopColor: t.line2, gap: 8 }}>
+        {c.fc.map(([d, hi, lo, cond, col], i) => (
+          <View key={`${d}${i}`} style={{ flexDirection: 'row', alignItems: 'center', height: 34, borderTopWidth: 1, borderTopColor: t.line2, gap: 8 }}>
             <Txt f="monoM" size={11} c="muted" style={{ width: 44 }}>{d}</Txt>
             <Txt f="monoM" size={10} c={col} style={{ flex: 1 }}>{cond}</Txt>
             <Txt f="monoM" size={12} c="muted" style={{ width: 36, textAlign: 'right' }}>{temp(lo)}</Txt>
